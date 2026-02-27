@@ -93,24 +93,17 @@ def output_text(results, output_file=None):
             print(f"{severity_color}[{issue['severity']}]{Style.RESET_ALL} {issue['message']}")
             print(f"  Resource: {issue['resource_type']}.{issue['resource_name']}")
             print(f"  File: {issue['file']}")
-            print(f"  Fix: {Fore.GREEN}{issue['fix']}{Style.RESET_ALL}")
+            
+            # NEW: Show ML analysis
+            print(f"  🤖 ML Risk Score: {Fore.RED if issue['ml_risk_score'] > 0.7 else Fore.YELLOW}{issue['ml_risk_score']:.0%}{Style.RESET_ALL} (Confidence: {issue['ml_confidence']:.0%})")
+            
+            if issue['triggered_features']:
+                print(f"  ⚠️  Triggered Features: {', '.join(issue['triggered_features'][:3])}")
+            
+            print(f"  💡 Fix: {Fore.GREEN}{issue['fix']}{Style.RESET_ALL}")
             print()
     else:
         print(f"{Fore.GREEN}✅ No security issues found!{Style.RESET_ALL}")
-    
-    # Save to file if requested
-    if output_file:
-        with open(output_file, 'w') as f:
-            f.write(f"TerraSecure Scan Results\n")
-            f.write(f"{'='*60}\n\n")
-            for issue in issues:
-                f.write(f"[{issue['severity']}] {issue['message']}\n")
-                f.write(f"  Resource: {issue['resource_type']}.{issue['resource_name']}\n")
-                f.write(f"  File: {issue['file']}\n")
-                f.write(f"  Fix: {issue['fix']}\n\n")
-        
-        print(f"{Fore.CYAN}📄 Results saved to: {output_file}{Style.RESET_ALL}")
-
 def output_json(results, output_file=None):
     """Output results in JSON format"""
     
