@@ -55,7 +55,7 @@ def print_banner():
     """Print CLI banner"""
     banner = f"""
 {Fore.CYAN}╔════════════════════════════════════════════════════════════╗
-║                     TerraSecure v1.0                       ║
+║                     TerraSecure                            ║
 ║          AI-Powered Terraform Security Scanner             ║
 ╚════════════════════════════════════════════════════════════╝{Style.RESET_ALL}
 """
@@ -77,14 +77,14 @@ def output_text(results, output_file=None):
     
     # Severity breakdown
     print(f"{Fore.CYAN}Severity Breakdown:{Style.RESET_ALL}")
-    print(f"  🔴 Critical: {Fore.RED}{stats['CRITICAL']}{Style.RESET_ALL}")
-    print(f"  🟡 High:     {Fore.YELLOW}{stats['HIGH']}{Style.RESET_ALL}")
-    print(f"  🔵 Medium:   {Fore.BLUE}{stats['MEDIUM']}{Style.RESET_ALL}")
+    print(f"   Critical: {Fore.RED}{stats['CRITICAL']}{Style.RESET_ALL}")
+    print(f"   High:     {Fore.YELLOW}{stats['HIGH']}{Style.RESET_ALL}")
+    print(f"   Medium:   {Fore.BLUE}{stats['MEDIUM']}{Style.RESET_ALL}")
     print()
     
     # Detailed findings
     if issues:
-        print(f"{Fore.CYAN}🔍 Detailed Findings{Style.RESET_ALL}")
+        print(f"{Fore.CYAN} Detailed Findings{Style.RESET_ALL}")
         print(f"{'='*60}\n")
         
         for i, issue in enumerate(issues, 1):
@@ -95,15 +95,15 @@ def output_text(results, output_file=None):
             print(f"  File: {issue['file']}")
             
             # NEW: Show ML analysis
-            print(f"  🤖 ML Risk Score: {Fore.RED if issue['ml_risk_score'] > 0.7 else Fore.YELLOW}{issue['ml_risk_score']:.0%}{Style.RESET_ALL} (Confidence: {issue['ml_confidence']:.0%})")
+            print(f"   ML Risk Score: {Fore.RED if issue['ml_risk_score'] > 0.7 else Fore.YELLOW}{issue['ml_risk_score']:.0%}{Style.RESET_ALL} (Confidence: {issue['ml_confidence']:.0%})")
             
             if issue['triggered_features']:
-                print(f"  ⚠️  Triggered Features: {', '.join(issue['triggered_features'][:3])}")
+                print(f"    Triggered Features: {', '.join(issue['triggered_features'][:3])}")
             
-            print(f"  💡 Fix: {Fore.GREEN}{issue['fix']}{Style.RESET_ALL}")
+            print(f"   Fix: {Fore.GREEN}{issue['fix']}{Style.RESET_ALL}")
             print()
     else:
-        print(f"{Fore.GREEN}✅ No security issues found!{Style.RESET_ALL}")
+        print(f"{Fore.GREEN} No security issues found!{Style.RESET_ALL}")
 def output_json(results, output_file=None):
     """Output results in JSON format"""
     
