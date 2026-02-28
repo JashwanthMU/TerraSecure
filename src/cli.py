@@ -68,7 +68,7 @@ def output_text(results, output_file=None):
     issues = results['issues']
     
     # Summary
-    print(f"\n{Fore.CYAN}📊 Scan Summary{Style.RESET_ALL}")
+    print(f"\n{Fore.CYAN} Scan Summary{Style.RESET_ALL}")
     print(f"{'='*60}")
     print(f"Total Resources Scanned: {results['total_resources']}")
     print(f"Resources Passed: {Fore.GREEN}{results['passed']}{Style.RESET_ALL}")
