@@ -15,13 +15,11 @@ class TerraformParser:
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 content = f.read()
-            
-            # Parse HCL
+
             parsed = hcl2.loads(content)
             
             resources = []
-            
-            # Extract resources
+
             if 'resource' in parsed:
                 for resource_block in parsed['resource']:
                     for resource_type, resource_configs in resource_block.items():

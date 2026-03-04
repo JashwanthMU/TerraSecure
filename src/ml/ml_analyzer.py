@@ -33,17 +33,17 @@ class MLAnalyzer:
     
     def _load_model(self):
         """Load trained XGBoost model"""
-        model_path = 'models/xgboost_50features_model.pkl'  # Updated path
+        model_path = 'models/xgboost_50features_model.pkl'  
         
         if os.path.exists(model_path):
             try:
                 self.model = joblib.load(model_path)
-                print("✅ 50-feature ML model loaded")
+                print("50-feature ML model loaded")
             except Exception as e:
-                print(f"⚠️  Could not load ML model: {e}")
+                print(f"Could not load ML model: {e}")
                 self.model = None
         else:
-            print("⚠️  ML model not found. Run: python src/ml/train_model.py")
+            print("ML model not found. Run: python src/ml/train_model.py")
             self.model = None
         
     def analyze(self, resource):
@@ -61,21 +61,20 @@ class MLAnalyzer:
         
         if self.model is None:
             return self._fallback_analysis()
-        
-        # Extract features
+
         features_dict = self.extractor.extract_features(resource)
         
-        # Convert to array in correct order
+
         features_array = np.array([[features_dict[name] for name in self.feature_names]])
         
-        # Predict
+
         prediction = self.model.predict(features_array)[0]
         probabilities = self.model.predict_proba(features_array)[0]
         
-        risk_score = probabilities[1]  # Probability of being risky
+        risk_score = probabilities[1] 
         confidence = max(probabilities)
         
-        # Identify triggered features
+
         triggered = [name for name, val in features_dict.items() if val == 1]
         
         return {

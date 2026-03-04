@@ -7,13 +7,13 @@ try:
     LLM_AVAILABLE = True
 except ImportError:
     LLM_AVAILABLE = False
-    print("⚠️  LLM module not available")
+    print("LLM module not available")
 try:
     from ml.ml_analyzer import MLAnalyzer
     ML_AVAILABLE = True
 except ImportError:
     ML_AVAILABLE = False
-    print("⚠️  ML analyzer not available. Install: pip install xgboost scikit-learn joblib")
+    print("ML analyzer not available. Install: pip install xgboost scikit-learn joblib")
 
 class SecurityAnalyzer:
     """Analyzes Terraform resources for security issues"""
@@ -26,7 +26,7 @@ class SecurityAnalyzer:
             try:
                 self.ml_analyzer = MLAnalyzer()
             except Exception as e:
-                print(f"⚠️  ML analyzer init failed: {e}")
+                print(f"ML analyzer init failed: {e}")
                 self.ml_analyzer = None
         else:
             self.ml_analyzer = None
@@ -35,7 +35,7 @@ class SecurityAnalyzer:
             try:
                 self.llm_analyzer = LLMAnalyzer()
             except Exception as e:
-                print(f"⚠️  LLM analyzer init failed: {e}")
+                print(f"LLM analyzer init failed: {e}")
                 self.llm_analyzer = None
         else:
             self.llm_analyzer = None
@@ -63,7 +63,7 @@ class SecurityAnalyzer:
                         try:
                             ml_result = self.ml_analyzer.analyze(resource)
                         except Exception as e:
-                            print(f"⚠️  ML analysis failed: {e}")
+                            print(f"ML analysis failed: {e}")
                             ml_result = self._default_ml_result()
                     else:
                         ml_result = self._default_ml_result()
@@ -88,7 +88,7 @@ class SecurityAnalyzer:
                                 resource, ml_result, finding
                             )
                         except Exception as e:
-                            print(f"⚠️  LLM enhancement failed: {e}")
+                            print(f"LLM enhancement failed: {e}")
                 
                     findings.append(finding)
                     stats[rule['severity']] += 1
@@ -113,12 +113,10 @@ class SecurityAnalyzer:
         """Check if resource violates rule"""
         
         pattern = rule['pattern']
-        
-        # Check resource type matches
+
         if resource['type'] != pattern['resource_type']:
             return False
-        
-        # Check all conditions
+
         for condition in pattern['conditions']:
             if not self._check_condition(resource, condition):
                 return False
@@ -130,22 +128,18 @@ class SecurityAnalyzer:
         
         prop_name = condition['property']
         props = resource.get('properties', {})
-        
-        # Handle nested properties
+
         if '.' in prop_name:
             value = self.parser.extract_property(resource, prop_name)
         else:
             value = props.get(prop_name)
-        
-        # Check 'absent' condition
+
         if 'absent' in condition:
             return (value is None) == condition['absent']
-        
-        # Check 'equals' condition
+
         if 'equals' in condition:
             return value == condition['equals']
-        
-        # Check 'contains' condition
+
         if 'contains' in condition:
             search_terms = condition['contains']
             if isinstance(search_terms, str):
@@ -157,7 +151,6 @@ class SecurityAnalyzer:
                 value_str = str(value).lower()
                 return any(term in value_str for term in search_terms)
         
-        # Check 'less_than' condition
         if 'less_than' in condition:
             try:
                 return int(value or 0) < condition['less_than']
