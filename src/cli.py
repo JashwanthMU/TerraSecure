@@ -62,16 +62,14 @@ def output_text(results, output_file=None):
     
     stats = results['stats']
     issues = results['issues']
-    
-    # Summary
+
     print(f"\n{Fore.CYAN}Scan Summary{Style.RESET_ALL}")
     print(f"{'='*60}")
     print(f"Total Resources Scanned: {results['total_resources']}")
     print(f"Resources Passed: {Fore.GREEN}{results['passed']}{Style.RESET_ALL}")
     print(f"Issues Found: {Fore.RED}{len(issues)}{Style.RESET_ALL}")
     print()
-    
-    # Severity breakdown
+
     print(f"{Fore.CYAN}Severity Breakdown:{Style.RESET_ALL}")
     print(f"  Critical: {Fore.RED}{stats['CRITICAL']}{Style.RESET_ALL}")
     print(f"  High:     {Fore.YELLOW}{stats['HIGH']}{Style.RESET_ALL}")
@@ -127,7 +125,7 @@ def output_text(results, output_file=None):
                         if line.strip():
                             print(f"     {line}")
                 
-                print(f"  {Fore.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Style.RESET_ALL}")
+                
             else:
                 print(f"\n  Fix: {Fore.GREEN}{issue['fix']}{Style.RESET_ALL}")
             
