@@ -113,7 +113,7 @@ def output_text(results, output_file=None):
                 
                 
                 if issue.get('llm_attack_scenario'):
-                    print(f"\n  {Fore.RED}  Attack Scenario:{Style.RESET_ALL}")
+                    print(f"\n  {Fore.RED} Attack Scenario:{Style.RESET_ALL}")
                     print(f"     {issue['llm_attack_scenario']}")
                 
                 
