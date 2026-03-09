@@ -1,3 +1,5 @@
+import sys
+import os
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -8,31 +10,46 @@ import json
 from datetime import datetime
 
 def generate_comprehensive_training_data():
-    """Generate large, diverse training dataset"""
+    """Generate large, diverse training dataset using existing script"""
     print(" Generating comprehensive training dataset...")
-    from generate_training_data import generate_training_data
-    base_data = generate_training_data()
+    print("   Running generate_training_data.py...")
+    result = os.system('python scripts/generate_training_data.py')
+    
+    if result != 0:
+        print(" Failed to generate base training data")
+        return None
+    base_data_path = 'data/training_data_50features.csv'
+    
+    if not os.path.exists(base_data_path):
+        print(f" Training data not found at: {base_data_path}")
+        return None
+
+    base_df = pd.read_csv(base_data_path)
+    base_data = base_df.to_dict('records')
+    
+    print(f" Loaded {len(base_data)} base examples")
+
     additional_risky = []
     additional_safe = []
     breach_patterns = [
-        #Capital one 
+        #Capital one breach
         {
             'open_cidr_0_0_0_0': 1, 'iam_wildcard_action': 1, 'iam_wildcard_resource': 1,
             's3_public_acl': 1, 's3_encryption_disabled': 1, 'cloudtrail_not_enabled': 1,
             'vpc_flow_logs_disabled': 1, 'guardduty_not_enabled': 1
         },
-        #Uber 
+        #Uber pattern 
         {
             'secrets_in_environment_vars': 1, 'open_ssh_port_22': 1, 
             'mfa_not_enabled': 1, 'access_logging_disabled': 1,
             'alarm_missing_for_changes': 1
         },
-        #Tesla
+        #Tesla S3 exposure
         {
             's3_public_acl': 1, 's3_encryption_disabled': 1, 's3_versioning_disabled': 1,
             's3_lifecycle_policy_missing': 1, 's3_mfa_delete_disabled': 1
         },
-        #MongoDB ransomware 
+        #Mongodb ransomware 
         {
             'rds_publicly_accessible': 1, 'open_database_port_3306': 1,
             'rds_storage_unencrypted': 1, 'backup_vault_unencrypted': 1,
@@ -41,17 +58,22 @@ def generate_comprehensive_training_data():
     ]
 
     for pattern in breach_patterns:
-        for _ in range(20): 
+        for _ in range(20):  
             variation = pattern.copy()
+
             for key in variation:
                 if np.random.random() < 0.2:  
                     variation[key] = 0
-            for i in range(1, 51):
-                feature_name = f'feature_{i}'
-                if feature_name not in variation:
-                    variation[feature_name] = 0
+            
+            if base_data:
+                sample_features = [k for k in base_data[0].keys() if k != 'label']
+                for feature in sample_features:
+                    if feature not in variation:
+                        variation[feature] = 0
+            
             variation['label'] = 'risky'
             additional_risky.append(variation)
+
     safe_patterns = [
         {
             's3_public_acl': 0, 's3_encryption_disabled': 0, 's3_versioning_disabled': 0,
@@ -69,19 +91,29 @@ def generate_comprehensive_training_data():
             'password_policy_weak': 0, 'cross_account_access_unrestricted': 0
         }
     ]
+    
     for pattern in safe_patterns:
-        for _ in range(30):  
+        for _ in range(30): 
             variation = pattern.copy()
-            for i in range(1, 51):
-                feature_name = f'feature_{i}'
-                if feature_name not in variation:
-                    variation[feature_name] = 0
+           
+            if base_data:
+                sample_features = [k for k in base_data[0].keys() if k != 'label']
+                for feature in sample_features:
+                    if feature not in variation:
+                        variation[feature] = 0
+            
             variation['label'] = 'safe'
             additional_safe.append(variation)
+
     all_data = base_data + additional_risky + additional_safe
-    print(f" Generated {len(all_data)} training examples")
-    print(f"   - Risky: {sum(1 for d in all_data if d['label'] == 'risky')}")
-    print(f"   - Safe: {sum(1 for d in all_data if d['label'] == 'safe')}")
+    
+    print(f" Generated {len(all_data)} total training examples")
+    print(f"   - Base examples: {len(base_data)}")
+    print(f"   - Additional risky: {len(additional_risky)}")
+    print(f"   - Additional safe: {len(additional_safe)}")
+    print(f"   - Total risky: {sum(1 for d in all_data if d['label'] == 'risky')}")
+    print(f"   - Total safe: {sum(1 for d in all_data if d['label'] == 'safe')}")
+    
     return pd.DataFrame(all_data)
 
 def train_production_model():
@@ -90,7 +122,14 @@ def train_production_model():
     print("\n" + "="*60)
     print("TerraSecure Production Model Training")
     print("="*60 + "\n")
+
     df = generate_comprehensive_training_data()
+    
+    if df is None:
+        print("\n Failed to generate training data")
+        return None, None
+
+    os.makedirs('data', exist_ok=True)
     df.to_csv('data/production_training_data.csv', index=False)
     print("\n Training data saved to: data/production_training_data.csv")
 
@@ -104,7 +143,6 @@ def train_production_model():
     print(f"\n Dataset Split:")
     print(f"   Training: {len(X_train)} samples")
     print(f"   Testing: {len(X_test)} samples")
-
     print("\n Training XGBoost model...")
     
     model = xgb.XGBClassifier(
@@ -148,8 +186,8 @@ def train_production_model():
     print(f"Actual Safe     {cm[0][0]:>14}  {cm[0][1]:>15}")
     print(f"Actual Risky    {cm[1][0]:>14}  {cm[1][1]:>15}")
 
-    fp_rate = cm[0][1] / (cm[0][0] + cm[0][1])
-    fn_rate = cm[1][0] / (cm[1][0] + cm[1][1])
+    fp_rate = cm[0][1] / (cm[0][0] + cm[0][1]) if (cm[0][0] + cm[0][1]) > 0 else 0
+    fn_rate = cm[1][0] / (cm[1][0] + cm[1][1]) if (cm[1][0] + cm[1][1]) > 0 else 0
     
     print(f"\n Production Metrics:")
     print(f"   False Positive Rate: {fp_rate:.2%} (Target: <10%)")
@@ -163,11 +201,13 @@ def train_production_model():
         'importance': model.feature_importances_
     }).sort_values('importance', ascending=False)
     
-    print("\n🔝 Top 10 Most Important Features:")
+    print("\n Top 10 Most Important Features:")
     for idx, row in feature_importance.head(10).iterrows():
         print(f"   {row['feature']}: {row['importance']:.4f}")
 
+    os.makedirs('models', exist_ok=True)
     model_path = 'models/terrasecure_production_v1.0.pkl'
+    
     joblib.dump(model, model_path)
     print(f"\n Model saved to: {model_path}")
 
@@ -187,8 +227,11 @@ def train_production_model():
         'top_features': feature_importance.head(20).to_dict('records')
     }
     
-    with open('models/model_metadata.json', 'w') as f:
+    metadata_path = 'models/model_metadata.json'
+    with open(metadata_path, 'w') as f:
         json.dump(metadata, f, indent=2)
+    
+    print(f" Metadata saved to: {metadata_path}")
     
     print("\n Production model build complete!")
     print(f"\nModel Info:")
@@ -200,12 +243,19 @@ def train_production_model():
     return model, metadata
 
 if __name__ == '__main__':
-    import os
-    os.makedirs('data', exist_ok=True)
-    os.makedirs('models', exist_ok=True)
+    try:
+        model, metadata = train_production_model()
+        
+        if model is not None:
+            print("\n" + "="*60)
+            print(" PRODUCTION MODEL READY FOR DISTRIBUTION")
+            print("="*60)
+        else:
+            print("\n Model build failed")
+            sys.exit(1)
     
-    model, metadata = train_production_model()
-    
-    print("\n" + "="*60)
-    print(" PRODUCTION MODEL READY FOR DISTRIBUTION")
-    print("="*60)
+    except Exception as e:
+        print(f"\n Error: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
