@@ -84,3 +84,128 @@ def generate_comprehensive_training_data():
     print(f"   - Safe: {sum(1 for d in all_data if d['label'] == 'safe')}")
     return pd.DataFrame(all_data)
 
+def train_production_model():
+    """Train and validate production model"""
+    
+    print("\n" + "="*60)
+    print("TerraSecure Production Model Training")
+    print("="*60 + "\n")
+    df = generate_comprehensive_training_data()
+    df.to_csv('data/production_training_data.csv', index=False)
+    print("\n Training data saved to: data/production_training_data.csv")
+
+    X = df.drop('label', axis=1)
+    y = df['label'].map({'risky': 1, 'safe': 0})
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+    
+    print(f"\n Dataset Split:")
+    print(f"   Training: {len(X_train)} samples")
+    print(f"   Testing: {len(X_test)} samples")
+
+    print("\n Training XGBoost model...")
+    
+    model = xgb.XGBClassifier(
+        n_estimators=200,
+        max_depth=10,
+        learning_rate=0.05,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        random_state=42,
+        eval_metric='logloss'
+    )
+    
+    model.fit(
+        X_train, y_train,
+        eval_set=[(X_test, y_test)],
+        verbose=False
+    )
+
+    print("\n Running 5-fold cross-validation...")
+    cv_scores = cross_val_score(model, X, y, cv=5, scoring='accuracy')
+    
+    print(f"\n Cross-Validation Results:")
+    print(f"   Mean Accuracy: {cv_scores.mean():.2%}")
+    print(f"   Std Deviation: {cv_scores.std():.2%}")
+    print(f"   Individual Folds: {[f'{s:.2%}' for s in cv_scores]}")
+
+    y_pred = model.predict(X_test)
+    y_pred_proba = model.predict_proba(X_test)[:, 1]
+    
+    print("\n Test Set Performance:")
+    print("\nClassification Report:")
+    print(classification_report(
+        y_test, y_pred, 
+        target_names=['Safe', 'Risky'],
+        digits=4
+    ))
+    
+    print("\nConfusion Matrix:")
+    cm = confusion_matrix(y_test, y_pred)
+    print(f"                Predicted Safe  Predicted Risky")
+    print(f"Actual Safe     {cm[0][0]:>14}  {cm[0][1]:>15}")
+    print(f"Actual Risky    {cm[1][0]:>14}  {cm[1][1]:>15}")
+
+    fp_rate = cm[0][1] / (cm[0][0] + cm[0][1])
+    fn_rate = cm[1][0] / (cm[1][0] + cm[1][1])
+    
+    print(f"\n Production Metrics:")
+    print(f"   False Positive Rate: {fp_rate:.2%} (Target: <10%)")
+    print(f"   False Negative Rate: {fn_rate:.2%} (Target: <5%)")
+    
+    if fp_rate > 0.10:
+        print("\n  WARNING: False positive rate exceeds 10% threshold!")
+
+    feature_importance = pd.DataFrame({
+        'feature': X.columns,
+        'importance': model.feature_importances_
+    }).sort_values('importance', ascending=False)
+    
+    print("\n🔝 Top 10 Most Important Features:")
+    for idx, row in feature_importance.head(10).iterrows():
+        print(f"   {row['feature']}: {row['importance']:.4f}")
+
+    model_path = 'models/terrasecure_production_v1.0.pkl'
+    joblib.dump(model, model_path)
+    print(f"\n Model saved to: {model_path}")
+
+    metadata = {
+        'version': '1.0.0',
+        'build_date': datetime.now().isoformat(),
+        'training_samples': len(df),
+        'features': X.columns.tolist(),
+        'accuracy': float(cv_scores.mean()),
+        'false_positive_rate': float(fp_rate),
+        'false_negative_rate': float(fn_rate),
+        'hyperparameters': {
+            'n_estimators': 200,
+            'max_depth': 10,
+            'learning_rate': 0.05
+        },
+        'top_features': feature_importance.head(20).to_dict('records')
+    }
+    
+    with open('models/model_metadata.json', 'w') as f:
+        json.dump(metadata, f, indent=2)
+    
+    print("\n Production model build complete!")
+    print(f"\nModel Info:")
+    print(f"   Version: {metadata['version']}")
+    print(f"   Accuracy: {metadata['accuracy']:.2%}")
+    print(f"   FP Rate: {metadata['false_positive_rate']:.2%}")
+    print(f"   Size: {os.path.getsize(model_path) / 1024:.1f} KB")
+    
+    return model, metadata
+
+if __name__ == '__main__':
+    import os
+    os.makedirs('data', exist_ok=True)
+    os.makedirs('models', exist_ok=True)
+    
+    model, metadata = train_production_model()
+    
+    print("\n" + "="*60)
+    print(" PRODUCTION MODEL READY FOR DISTRIBUTION")
+    print("="*60)
