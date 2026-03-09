@@ -3,7 +3,10 @@ import os
 import json
 import numpy as np
 from datetime import datetime
-from ml.feature_extractor import SecurityFeatureExtractor
+try:
+    from ml.feature_extractor import SecurityFeatureExtractor
+except ModuleNotFoundError:
+    from feature_extractor import SecurityFeatureExtractor
 
 class MLAnalyzer:
     """
