@@ -3,6 +3,7 @@
 .gitattributes
 .github/
 
+
 __pycache__/
 *.py[cod]
 *$py.class
@@ -16,6 +17,7 @@ dist/
 build/
 .pytest_cache/
 .mypy_cache/
+
 
 .vscode/
 .idea/

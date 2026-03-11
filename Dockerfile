@@ -18,8 +18,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m -u 1000 -s /bin/bash terrasecure && \
-    mkdir -p /app /scan /models && \
-    chown -R terrasecure:terrasecure /app /scan /models
+    mkdir -p /app /scan /models /data && \
+    chown -R terrasecure:terrasecure /app /scan /models /data
 
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
@@ -33,7 +33,7 @@ COPY --chown=terrasecure:terrasecure requirements.txt .
 COPY --chown=terrasecure:terrasecure setup.py .
 COPY --chown=terrasecure:terrasecure README.md .
 
-COPY --chown=terrasecure:terrasecure models/ ./models/ 2>/dev/null || true
+COPY --chown=terrasecure:terrasecure models/ ./models/
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -43,7 +43,6 @@ USER terrasecure
 
 RUN if [ ! -f models/terrasecure_production_v1.0.pkl ]; then \
         echo "  Production model not found - building..."; \
-        mkdir -p models data; \
         python scripts/build_production_model.py || \
         echo "  Model build failed - will use fallback mode"; \
     else \

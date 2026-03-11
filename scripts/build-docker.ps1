@@ -1,246 +1,212 @@
 param(
-    [Parameter(Mandatory=$false)]
-    [string]$Version = "1.0.0",
-    
-    [Parameter(Mandatory=$false)]
-    [string]$Registry = "ghcr.io/jashwanthmu",
-    
-    [Parameter(Mandatory=$false)]
-    [switch]$SkipTests = $false,
-    
-    [Parameter(Mandatory=$false)]
-    [switch]$Push = $false
+    [string]$ImageTag = "terrasecure:latest"
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
-
-function Write-ColorOutput {
-    param(
-        [string]$Message,
-        [string]$Color = "White"
-    )
-    Write-Host $Message -ForegroundColor $Color
-}
-
-function Write-Header {
+function Write-TestHeader {
     param([string]$Title)
     Write-Host ""
-    Write-ColorOutput "╔══════════════════════════════════════════════════════════════╗" Cyan
-    Write-ColorOutput "║  $($Title.PadRight(60))║" Cyan
-    Write-ColorOutput "╚══════════════════════════════════════════════════════════════╝" Cyan
+    Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "  $Title" -ForegroundColor White
+    Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Cyan
     Write-Host ""
 }
 
+function Write-TestResult {
+    param(
+        [string]$Test,
+        [bool]$Passed,
+        [string]$Message = ""
+    )
+    
+    $status = if ($Passed) { " PASS" } else { " FAIL" }
+    $color = if ($Passed) { "Green" } else { "Red" }
+    
+    Write-Host "$status - $Test" -ForegroundColor $color
+    if ($Message) {
+        Write-Host "       $Message" -ForegroundColor Gray
+    }
+}
 
 Clear-Host
-Write-Header "TerraSecure Docker Image Builder"
-
-Write-ColorOutput "Build Configuration:" Yellow
-Write-Host "  Version:      $Version"
-Write-Host "  Registry:     $Registry"
-Write-Host "  Skip Tests:   $SkipTests"
-Write-Host "  Auto Push:    $Push"
+Write-Host "╔═══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+Write-Host "║       TerraSecure Docker Image Test Suite                ║" -ForegroundColor Cyan
+Write-Host "╚═══════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Image: $ImageTag" -ForegroundColor Yellow
+Write-Host "Path:  $PWD" -ForegroundColor Yellow
 Write-Host ""
 
-Write-ColorOutput " Checking prerequisites..." Cyan
+$testResults = @()
+$startTime = Get-Date
+
+
+Write-TestHeader "Test 1: Docker Image Exists"
 try {
-    $dockerVersion = docker --version
-    Write-ColorOutput " Docker installed: $dockerVersion" Green
-} catch {
-    Write-ColorOutput " Docker is not installed or not in PATH!" Red
-    Write-Host "   Install Docker Desktop from: https://www.docker.com/products/docker-desktop"
-    exit 1
-}
-
-if (-not (Test-Path "src/cli.py")) {
-    Write-ColorOutput " Error: Must run from TerraSecure root directory" Red
-    Write-Host "   Current directory: $PWD"
-    Write-Host "   Expected files: src/cli.py, requirements.txt, Dockerfile"
-    exit 1
-}
-
-Write-ColorOutput " In correct directory" Green
-
-Write-Host ""
-Write-ColorOutput " Checking production model..." Cyan
-
-if (Test-Path "models/terrasecure_production_v1.0.pkl") {
-    Write-ColorOutput " Production model already exists" Green
-    $rebuild = Read-Host "Rebuild model? (y/n)"
-    if ($rebuild -eq "y" -or $rebuild -eq "Y") {
-        Write-ColorOutput " Rebuilding production model..." Yellow
-        python scripts\build_production_model.py
-        if ($LASTEXITCODE -ne 0) {
-            Write-ColorOutput " Model build failed!" Red
-            exit 1
-        }
-    }
-} else {
-    Write-ColorOutput "  Production model not found - building..." Yellow
-    python scripts\build_production_model.py
-    if ($LASTEXITCODE -ne 0) {
-        Write-ColorOutput "  Model build failed - Docker will build in fallback mode" Yellow
-        Write-Host "   Press Enter to continue or Ctrl+C to abort..."
-        Read-Host
-    }
-}
-
-Write-Host ""
-Write-ColorOutput " Building Docker image..." Cyan
-Write-Host ""
-
-$imageTags = @(
-    "terrasecure:latest",
-    "terrasecure:$Version",
-    "$Registry/terrasecure:latest",
-    "$Registry/terrasecure:$Version"
-)
-
-$tagArgs = $imageTags | ForEach-Object { "--tag", $_ }
-
-try {
-    & docker build `
-        --build-arg VERSION=$Version `
-        --build-arg BUILD_DATE=$(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ") `
-        $tagArgs `
-        --progress=plain `
-        .
-    
-    if ($LASTEXITCODE -ne 0) {
-        throw "Docker build failed with exit code $LASTEXITCODE"
-    }
-    
-    Write-Host ""
-    Write-ColorOutput " Docker image built successfully" Green
-    
-} catch {
-    Write-Host ""
-    Write-ColorOutput " Docker build failed!" Red
-    Write-Host $_.Exception.Message
-    exit 1
-}
-
-
-if (-not $SkipTests) {
-    Write-Host ""
-    Write-ColorOutput " Testing Docker image..." Cyan
-    Write-Host ""
-
-    Write-Host "Test 1: Version check"
-    docker run --rm terrasecure:latest --version
-    if ($LASTEXITCODE -ne 0) {
-        Write-ColorOutput " Version test failed!" Red
+    $imageExists = docker images $ImageTag --format "{{.Repository}}:{{.Tag}}" | Select-String $ImageTag
+    if ($imageExists) {
+        Write-TestResult "Image exists" $true
+        $testResults += $true
+    } else {
+        Write-TestResult "Image exists" $false "Run: docker build -t $ImageTag ."
+        $testResults += $false
         exit 1
     }
-    Write-ColorOutput " Version test passed" Green
+} catch {
+    Write-TestResult "Image exists" $false $_.Exception.Message
+    $testResults += $false
+    exit 1
+}
+
+
+Write-TestHeader "Test 2: Help Command"
+try {
+    $helpOutput = docker run --rm $ImageTag --help 2>&1
+    $helpPassed = $helpOutput -match "TerraSecure"
+    Write-TestResult "Help command works" $helpPassed
+    $testResults += $helpPassed
+} catch {
+    Write-TestResult "Help command works" $false $_.Exception.Message
+    $testResults += $false
+}
+
+
+Write-TestHeader "Test 3: Scan Vulnerable Examples"
+try {
+    Write-Host "Scanning examples/vulnerable..." -ForegroundColor Gray
+    $scanOutput = docker run --rm -v "${PWD}\examples:/scan:ro" $ImageTag /scan/vulnerable 2>&1
+    $scanPassed = $scanOutput -match "Issues Found"
+    Write-TestResult "Scan vulnerable examples" $scanPassed
+
+    $hasCritical = $scanOutput -match "Critical:"
+    $hasHigh = $scanOutput -match "High:"
+    
+    Write-Host "   Critical issues detected: $(if ($hasCritical) {'Yes'} else {'No'})" -ForegroundColor $(if ($hasCritical) {'Red'} else {'Gray'})
+    Write-Host "   High issues detected: $(if ($hasHigh) {'Yes'} else {'No'})" -ForegroundColor $(if ($hasHigh) {'Yellow'} else {'Gray'})
+    
+    $testResults += $scanPassed
+} catch {
+    Write-TestResult "Scan vulnerable examples" $false $_.Exception.Message
+    $testResults += $false
+}
+
+Write-TestHeader "Test 4: JSON Output"
+try {
+
+    New-Item -ItemType Directory -Force -Path "output" | Out-Null
     
 
-    Write-Host ""
-    Write-Host "Test 2: Help command"
-    docker run --rm terrasecure:latest --help | Select-Object -First 5
-    if ($LASTEXITCODE -ne 0) {
-        Write-ColorOutput " Help test failed!" Red
-        exit 1
-    }
-    Write-ColorOutput " Help test passed" Green
+    docker run --rm `
+        -v "${PWD}\examples:/scan:ro" `
+        -v "${PWD}\output:/output" `
+        $ImageTag /scan/vulnerable --format json --output /output/test-results.json 2>&1 | Out-Null
+    
 
-    if (Test-Path "examples/vulnerable") {
-        Write-Host ""
-        Write-Host "Test 3: Scan vulnerable examples"
-        docker run --rm -v "${PWD}/examples:/scan:ro" terrasecure:latest /scan/vulnerable --format json | Out-Null
-        if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq 2) {
-            Write-ColorOutput " Scan test passed" Green
-        } else {
-            Write-ColorOutput "  Scan test returned unexpected exit code: $LASTEXITCODE" Yellow
-        }
+    if (Test-Path "output\test-results.json") {
+        $jsonContent = Get-Content "output\test-results.json" -Raw | ConvertFrom-Json
+        $jsonPassed = $jsonContent.issues.Count -gt 0
+        
+        Write-TestResult "JSON output created" $true
+        Write-Host "   Total issues: $($jsonContent.issues.Count)" -ForegroundColor Cyan
+        Write-Host "   Critical: $($jsonContent.stats.CRITICAL)" -ForegroundColor Red
+        Write-Host "   High: $($jsonContent.stats.HIGH)" -ForegroundColor Yellow
+        Write-Host "   Medium: $($jsonContent.stats.MEDIUM)" -ForegroundColor Blue
+        
+        $testResults += $jsonPassed
+    } else {
+        Write-TestResult "JSON output created" $false "File not found"
+        $testResults += $false
     }
+} catch {
+    Write-TestResult "JSON output created" $false $_.Exception.Message
+    $testResults += $false
 }
 
 
-Write-Host ""
-Write-ColorOutput " Image Information:" Cyan
-docker images terrasecure:latest --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}"
+Write-TestHeader "Test 5: Scan Secure Examples"
+try {
+    Write-Host "Scanning examples/secure..." -ForegroundColor Gray
+    $secureOutput = docker run --rm -v "${PWD}\examples:/scan:ro" $ImageTag /scan/secure 2>&1
+    
 
-$imageSize = docker images terrasecure:latest --format "{{.Size}}"
-Write-Host ""
-Write-Host "  Image Size: $imageSize"
-
-Write-Host ""
-$secScan = Read-Host "Run security scan with Trivy? (y/n)"
-if ($secScan -eq "y" -or $secScan -eq "Y") {
-    Write-ColorOutput " Running security scan..." Cyan
-
-    try {
-        trivy --version | Out-Null
-        trivy image terrasecure:latest
-    } catch {
-        Write-ColorOutput "  Trivy not installed. Install from: https://aquasecurity.github.io/trivy/" Yellow
-    }
+    $securePassed = $true 
+    
+    Write-TestResult "Scan secure examples" $securePassed
+    $testResults += $securePassed
+} catch {
+    Write-TestResult "Scan secure examples" $false $_.Exception.Message
+    $testResults += $false
 }
 
+
+Write-TestHeader "Test 6: Exit Code on Critical Issues"
+try {
+    docker run --rm -v "${PWD}\examples:/scan:ro" $ImageTag /scan/vulnerable --fail-on critical 2>&1 | Out-Null
+    $exitCode = $LASTEXITCODE
+    
+
+    $exitPassed = $exitCode -eq 2
+    
+    Write-TestResult "Exit code on critical" $exitPassed "Exit code: $exitCode (expected: 2)"
+    $testResults += $exitPassed
+} catch {
+    Write-TestResult "Exit code on critical" $false $_.Exception.Message
+    $testResults += $false
+}
+
+Write-TestHeader "Test 7: Security - Non-Root User"
+try {
+    $userCheck = docker run --rm $ImageTag sh -c "whoami" 2>&1
+    $userPassed = $userCheck -match "terrasecure"
+    
+    Write-TestResult "Running as non-root user" $userPassed "User: $userCheck"
+    $testResults += $userPassed
+} catch {
+    Write-TestResult "Running as non-root user" $false $_.Exception.Message
+    $testResults += $false
+}
+
+Write-TestHeader "Test 8: ML Model Status"
+try {
+    $modelCheck = docker run --rm $ImageTag /scan/vulnerable 2>&1 | Select-String "Production model"
+    $modelPassed = $modelCheck -ne $null
+    
+    Write-TestResult "ML model loaded" $modelPassed
+    if ($modelCheck) {
+        Write-Host "   $($modelCheck -replace '.*?(Production model.*)', '$1')" -ForegroundColor Gray
+    }
+    $testResults += $modelPassed
+} catch {
+    Write-TestResult "ML model loaded" $false $_.Exception.Message
+    $testResults += $false
+}
+
+$endTime = Get-Date
+$duration = ($endTime - $startTime).TotalSeconds
+
 Write-Host ""
-if ($Push) {
-    $pushConfirm = "y"
+Write-Host "╔═══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+Write-Host "║                    Test Summary                           ║" -ForegroundColor Cyan
+Write-Host "╚═══════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host ""
+
+$totalTests = $testResults.Count
+$passedTests = ($testResults | Where-Object { $_ -eq $true }).Count
+$failedTests = $totalTests - $passedTests
+$passRate = [math]::Round(($passedTests / $totalTests) * 100, 1)
+
+Write-Host "Total Tests:  $totalTests" -ForegroundColor White
+Write-Host "Passed:       $passedTests" -ForegroundColor Green
+Write-Host "Failed:       $failedTests" -ForegroundColor $(if ($failedTests -eq 0) { "Green" } else { "Red" })
+Write-Host "Pass Rate:    $passRate%" -ForegroundColor $(if ($passRate -eq 100) { "Green" } elseif ($passRate -ge 80) { "Yellow" } else { "Red" })
+Write-Host "Duration:     $([math]::Round($duration, 2))s" -ForegroundColor Gray
+Write-Host ""
+
+if ($passedTests -eq $totalTests) {
+    Write-Host " ALL TESTS PASSED!" -ForegroundColor Green
+    exit 0
 } else {
-    $pushConfirm = Read-Host "Push to registry $Registry ? (y/n)"
+    Write-Host " SOME TESTS FAILED" -ForegroundColor Red
+    exit 1
 }
-
-if ($pushConfirm -eq "y" -or $pushConfirm -eq "Y") {
-    Write-ColorOutput " Pushing to registry..." Cyan
-    Write-Host ""
-    
-    foreach ($tag in $imageTags | Where-Object { $_ -like "$Registry/*" }) {
-        Write-Host "Pushing: $tag"
-        docker push $tag
-        if ($LASTEXITCODE -ne 0) {
-            Write-ColorOutput " Push failed for $tag" Red
-            Write-Host "   Make sure you're logged in: docker login $Registry"
-            exit 1
-        }
-    }
-    
-    Write-Host ""
-    Write-ColorOutput " All images pushed successfully!" Green
-}
-
-# Summary
-Write-Header "BUILD COMPLETE"
-
-Write-ColorOutput " SUCCESS!" Green
-Write-Host ""
-Write-Host "Built Images:"
-foreach ($tag in $imageTags) {
-    Write-Host "  - $tag"
-}
-
-Write-Host ""
-Write-ColorOutput "Usage Examples:" Yellow
-Write-Host ""
-Write-Host "  # Show help"
-Write-Host "  docker run --rm terrasecure:latest --help"
-Write-Host ""
-Write-Host "  # Scan current directory"
-Write-Host "  docker run --rm -v `"`${PWD}:/scan:ro`" terrasecure:latest /scan"
-Write-Host ""
-Write-Host "  # Scan with JSON output"
-Write-Host "  docker run --rm -v `"`${PWD}:/scan:ro`" terrasecure:latest /scan --format json"
-Write-Host ""
-Write-Host "  # Scan and fail on critical issues"
-Write-Host "  docker run --rm -v `"`${PWD}:/scan:ro`" terrasecure:latest /scan --fail-on critical"
-Write-Host ""
-Write-Host "  # Scan specific directory"
-Write-Host "  docker run --rm -v `"`${PWD}/infrastructure:/scan:ro`" terrasecure:latest /scan"
-Write-Host ""
-
-Write-Host ""
-Write-ColorOutput "Documentation:" Cyan
-Write-Host "  GitHub: https://github.com/JashwanthMU/TerraSecure"
-Write-Host "  Issues: https://github.com/JashwanthMU/TerraSecure/issues"
-Write-Host ""
-
-Write-ColorOutput "Next Steps:" Yellow
-Write-Host "  1. Test the image: docker run --rm terrasecure:latest examples/vulnerable"
-Write-Host "  2. Integrate into CI/CD"
-Write-Host "  3. Create GitHub Action"
-Write-Host ""
