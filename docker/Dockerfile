@@ -1,51 +1,63 @@
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 LABEL maintainer="TerraSecure Team"
 LABEL version="1.0.0"
 LABEL description="AI-Powered Terraform Security Scanner"
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /build
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 FROM python:3.11-slim
 
-RUN useradd -m -u 1000 terrasecure && \
-    mkdir -p /app /scan && \
-    chown -R terrasecure:terrasecure /app /scan
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /root/.local /home/terrasecure/.local
+RUN useradd -m -u 1000 -s /bin/bash terrasecure && \
+    mkdir -p /app /scan /models && \
+    chown -R terrasecure:terrasecure /app /scan /models
 
-ENV PATH=/home/terrasecure/.local/bin:$PATH \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 WORKDIR /app
 
-COPY --chown=terrasecure:terrasecure . .
+COPY --chown=terrasecure:terrasecure src/ ./src/
+COPY --chown=terrasecure:terrasecure scripts/ ./scripts/
+COPY --chown=terrasecure:terrasecure examples/ ./examples/
+COPY --chown=terrasecure:terrasecure requirements.txt .
+COPY --chown=terrasecure:terrasecure setup.py .
+COPY --chown=terrasecure:terrasecure README.md .
 
-RUN if [ ! -f models/terrasecure_production_v1.0.pkl ]; then \
-        echo "Production model not found!"; \
-        echo "Building production model..."; \
-        python scripts/build_production_model.py; \
-    fi
+COPY --chown=terrasecure:terrasecure models/ ./models/ 2>/dev/null || true
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/home/terrasecure/.local/bin:$PATH"
 
 USER terrasecure
+
+RUN if [ ! -f models/terrasecure_production_v1.0.pkl ]; then \
+        echo "  Production model not found - building..."; \
+        mkdir -p models data; \
+        python scripts/build_production_model.py || \
+        echo "  Model build failed - will use fallback mode"; \
+    else \
+        echo " Production model found"; \
+    fi
 
 VOLUME ["/scan"]
 
 ENTRYPOINT ["python", "src/cli.py"]
 CMD ["--help"]
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "from ml.ml_analyzer import MLAnalyzer; MLAnalyzer()" || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import sys; sys.path.insert(0, 'src'); from ml.ml_analyzer import MLAnalyzer; MLAnalyzer()" || exit 1
 
 LABEL org.opencontainers.image.source="https://github.com/JashwanthMU/TerraSecure"
-LABEL org.opencontainers.image.documentation="https://github.com/JashwanthMU/TerraSecure/blob/main/README.md"
+LABEL org.opencontainers.image.documentation="https://github.com/JashwanthMU/TerraSecure"
 LABEL org.opencontainers.image.licenses="MIT"

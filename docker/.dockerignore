@@ -1,37 +1,54 @@
-.git
+.git/
 .gitignore
-.github
+.gitattributes
+.github/
 
-__pycache__
+__pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 env/
 venv/
+ENV/
 *.egg-info/
 dist/
 build/
+.pytest_cache/
+.mypy_cache/
 
 .vscode/
 .idea/
 *.swp
 *.swo
+*.sublime-*
 
 .DS_Store
 Thumbs.db
+desktop.ini
 
 *.log
+logs/
 
 tests/
-*.test.py
+test_*.py
+*_test.py
 
 docs/
 *.md
 !README.md
 
-data/training_*.csv
-
 tmp/
 temp/
 *.tmp
+.cache/
+
+.env
+.env.local
+.env.*.local
+
+data/training_*.csv
+data/production_*.csv
+
+node_modules/
+coverage/

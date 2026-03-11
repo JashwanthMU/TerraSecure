@@ -2,16 +2,17 @@ version: '3.8'
 
 services:
   terrasecure:
+    image: terrasecure:latest
     build:
       context: .
       dockerfile: Dockerfile
-    image: terrasecure:latest
     container_name: terrasecure
 
     volumes:
       - ./examples:/scan:ro
+      - ./output:/output
 
-    command: ["/scan", "--format", "json"]
+    command: ["/scan/vulnerable", "--format", "json", "--output", "/output/scan-results.json"]
 
     deploy:
       resources:
@@ -19,13 +20,18 @@ services:
           cpus: '2'
           memory: 2G
         reservations:
-          cpus: '1'
+          cpus: '0.5'
+          memory: 512M
 
-    read_only: true
+    read_only: false  
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
 
     logging:
       driver: "json-file"
@@ -33,13 +39,13 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  dashboard:
-    image: terrasecure-dashboard:latest
-    ports:
-      - "8080:8080"
-    environment:
-      - TERRASECURE_API=http://terrasecure:5000
-    depends_on:
-      - terrasecure
-    profiles:
-      - dashboard
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.path.insert(0, 'src'); from ml.ml_analyzer import MLAnalyzer; MLAnalyzer()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  default:
+    name: terrasecure-network
