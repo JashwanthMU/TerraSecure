@@ -68,7 +68,7 @@ Unlike traditional rule-based scanners (Checkov, Trivy), TerraSecure uses **Mach
 
 ---
 
-## 📊 Example Output
+## 📊 Example Output Demo
 
 **Traditional Tools:**
 ```
@@ -364,7 +364,7 @@ Contributions are welcome! Please feel free to review and submit a Pull Request.
 - Trained on breach patterns from publicly disclosed security incidents
 - Inspired by the need to prevent the next Capital One breach ($190M)
 - Built as part of DevSecOps research 
-
+- If you find TerraSecure useful, please consider giving it a star! ⭐
 ---
 
 ## 📧 Contact
