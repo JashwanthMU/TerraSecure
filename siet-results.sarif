@@ -1,0 +1,102 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "TerraSecure",
+          "version": "1.0.0",
+          "informationUri": "https://github.com/JashwanthMU/TerraSecure",
+          "organization": "TerraSecure Team",
+          "semanticVersion": "1.0.0",
+          "rules": [
+            {
+              "id": "TERRAFORM-SECURITY",
+              "name": "RDS backup retention is less than 7 days",
+              "shortDescription": {
+                "text": "RDS backup retention is less than 7 days"
+              },
+              "fullDescription": {
+                "text": "RDS backup retention is less than 7 days"
+              },
+              "help": {
+                "text": "RDS backup retention is less than 7 days\n\nRemediation: Set backup_retention_period = 7 or higher",
+                "markdown": "## RDS backup retention is less than 7 days\n\nRDS backup retention is less than 7 days\n\n**Severity:** MEDIUM\n\n**ML Risk Score:** 93% (confidence: 93%)\n\n### Remediation\n\nSet backup_retention_period = 7 or higher"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "terraform",
+                  "iac"
+                ],
+                "precision": "high",
+                "security-severity": "4.0"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "TERRAFORM-SECURITY",
+          "level": "warning",
+          "message": {
+            "text": "RDS backup retention is less than 7 days"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "modules\\database\\main.tf",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "resource": "aws_db_instance.read_replica",
+            "severity": "medium",
+            "ml_risk_score": 0.931,
+            "ml_confidence": 0.931
+          },
+          "fixes": [
+            {
+              "description": {
+                "text": "Recommended fix"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "modules\\database\\main.tf"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "startLine": 1
+                      },
+                      "insertedContent": {
+                        "text": "Set backup_retention_period = 7 or higher"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "automationDetails": {
+        "id": "terrasecure/20260313-100639"
+      },
+      "columnKind": "utf16CodeUnits"
+    }
+  ]
+}

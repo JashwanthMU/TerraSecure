@@ -1,3 +1,14 @@
+"""
+TerraSecure CLI
+---------------
+Command-line interface for TerraSecure security scanner
+
+Supports:
+- Text output (human-readable with AI insights)
+- JSON output (machine-readable)
+- SARIF output (GitHub Security integration)
+"""
+
 import click
 import json
 import sys
@@ -5,19 +16,24 @@ import os
 from colorama import init, Fore, Style
 from scanner.analyzer import SecurityAnalyzer
 
-
+# Initialize colorama
 init(autoreset=True)
+
+# Version
+__version__ = "1.0.0"
+
 
 @click.command()
 @click.argument('path', type=click.Path(exists=True))
-@click.option('--format', type=click.Choice(['text', 'json']), default='text',
-              help='Output format (text or json)')
+@click.option('--format', type=click.Choice(['text', 'json', 'sarif']), default='text',
+              help='Output format (text, json, or sarif)')
 @click.option('--fail-on', type=click.Choice(['critical', 'high', 'medium', 'any']), 
               default='critical',
               help='Exit with error code on severity level')
 @click.option('--output', type=click.Path(), default=None,
               help='Save results to file')
-def scan(path, format, fail_on, output):
+@click.option('--version', is_flag=True, help='Show version and exit')
+def scan(path, format, fail_on, output, version):
     """
     TerraSecure - Scan Terraform files for security issues
     
@@ -25,27 +41,40 @@ def scan(path, format, fail_on, output):
         terrasecure scan ./terraform
         terrasecure scan main.tf --format json
         terrasecure scan . --fail-on high
+        terrasecure scan . --format sarif --output results.sarif
     """
     
+    # Handle version flag
+    if version:
+        click.echo(f"TerraSecure v{__version__}")
+        sys.exit(0)
+    
+    # Print banner for text output
     if format == 'text':
         print_banner()
 
+    # Initialize analyzer
     analyzer = SecurityAnalyzer()
     
-
+    # Scan path
     if os.path.isfile(path):
         results = analyzer.scan_file(path)
     else:
         results = analyzer.scan_directory(path)
     
-    if format == 'json':
+    # Output based on format
+    if format == 'sarif':
+        output_sarif(results, path, output)
+    elif format == 'json':
         output_json(results, output)
     else:
         output_text(results, output)
 
+    # Determine exit code
     exit_code = get_exit_code(results, fail_on)
     
     sys.exit(exit_code)
+
 
 def print_banner():
     """Print CLI banner"""
@@ -56,6 +85,7 @@ def print_banner():
 ╚════════════════════════════════════════════════════════════╝{Style.RESET_ALL}
 """
     print(banner)
+
 
 def output_text(results, output_file=None):
     """Output results in human-readable text format with LLM insights"""
@@ -77,7 +107,7 @@ def output_text(results, output_file=None):
     print()
     
     if issues:
-        print(f"{Fore.CYAN} Detailed Findings (with AI Analysis){Style.RESET_ALL}")
+        print(f"{Fore.CYAN}🔍 Detailed Findings (with AI Analysis){Style.RESET_ALL}")
         print(f"{'='*60}\n")
         
         for i, issue in enumerate(issues, 1):
@@ -94,44 +124,37 @@ def output_text(results, output_file=None):
                 features_display = ', '.join(issue['triggered_features'][:3])
                 if len(issue['triggered_features']) > 3:
                     features_display += f" (+{len(issue['triggered_features'])-3} more)"
-                print(f"    Triggered: {features_display}")
+                print(f"   🎯 Triggered: {features_display}")
             
             has_llm = 'llm_explanation' in issue and issue['llm_explanation']
             
             if has_llm:
                 print(f"\n  {Fore.CYAN}━━━  AI-Enhanced Analysis ━━━{Style.RESET_ALL}")
                 
-        
                 if issue.get('llm_explanation'):
-                    print(f"\n  {Fore.WHITE} Explanation:{Style.RESET_ALL}")
+                    print(f"\n  {Fore.WHITE}💡 Explanation:{Style.RESET_ALL}")
                     print(f"     {issue['llm_explanation']}")
                 
-                
                 if issue.get('llm_business_impact'):
-                    print(f"\n  {Fore.YELLOW} Business Impact:{Style.RESET_ALL}")
+                    print(f"\n  {Fore.YELLOW}💼 Business Impact:{Style.RESET_ALL}")
                     print(f"     {issue['llm_business_impact']}")
                 
-                
                 if issue.get('llm_attack_scenario'):
-                    print(f"\n  {Fore.RED} Attack Scenario:{Style.RESET_ALL}")
+                    print(f"\n  {Fore.RED}⚠️  Attack Scenario:{Style.RESET_ALL}")
                     print(f"     {issue['llm_attack_scenario']}")
                 
-                
                 if issue.get('llm_detailed_fix'):
-                    print(f"\n  {Fore.GREEN} Detailed Fix:{Style.RESET_ALL}")
-                    
+                    print(f"\n  {Fore.GREEN}🔧 Detailed Fix:{Style.RESET_ALL}")
                     fix_lines = issue['llm_detailed_fix'].split('\n')
                     for line in fix_lines:
                         if line.strip():
                             print(f"     {line}")
-                
-                
             else:
                 print(f"\n  Fix: {Fore.GREEN}{issue['fix']}{Style.RESET_ALL}")
             
             print()  
     else:
-        print(f"{Fore.GREEN} No security issues found!{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}✅ No security issues found!{Style.RESET_ALL}")
     
     if output_file:
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -153,18 +176,107 @@ def output_text(results, output_file=None):
                 
                 f.write('\n' + '-'*60 + '\n\n')
         
-        print(f"{Fore.CYAN} Results saved to: {output_file}{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}💾 Results saved to: {output_file}{Style.RESET_ALL}")
+
+
 def output_json(results, output_file=None):
     """Output results in JSON format"""
     
     json_output = json.dumps(results, indent=2)
     
     if output_file:
-        with open(output_file, 'w') as f:
+        with open(output_file, 'w', encoding='utf-8') as f:
             f.write(json_output)
-        print(f"Results saved to: {output_file}")
+        print(f"💾 Results saved to: {output_file}")
     else:
         print(json_output)
+
+
+def output_sarif(results, scan_path, output_file=None):
+    """
+    Output results in SARIF format for GitHub Security integration
+    
+    Args:
+        results: Scan results from SecurityAnalyzer
+        scan_path: Path that was scanned
+        output_file: Optional output file path
+    """
+    try:
+        # Import SARIF formatter
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+        from src.formatters.sarif_formatter import SARIFFormatter
+    except ImportError:
+        try:
+            from formatters.sarif_formatter import SARIFFormatter
+        except ImportError:
+            click.echo("❌ Error: SARIF formatter not found", err=True)
+            click.echo("   Make sure src/formatters/sarif_formatter.py exists", err=True)
+            sys.exit(1)
+    
+    # Convert issues to SARIF-compatible format
+    findings = []
+    
+    for issue in results.get('issues', []):
+        finding = {
+            'rule_id': issue.get('rule_id', 'TERRAFORM-SECURITY'),
+            'title': issue.get('message', 'Security issue detected'),
+            'description': issue.get('llm_explanation', issue.get('message', '')),
+            'severity': issue.get('severity', 'medium').lower(),
+            'file': issue.get('file', 'unknown'),
+            'line': issue.get('line', 1),
+            'resource': f"{issue.get('resource_type', 'unknown')}.{issue.get('resource_name', 'unknown')}",
+            'ml_risk_score': issue.get('ml_risk_score', 0.5),
+            'ml_confidence': issue.get('ml_confidence', 0.5),
+        }
+        
+        # Add remediation if available
+        if issue.get('llm_detailed_fix'):
+            finding['remediation'] = issue['llm_detailed_fix']
+        elif issue.get('fix'):
+            finding['remediation'] = issue['fix']
+        
+        # Add references if available
+        references = []
+        if issue.get('llm_business_impact'):
+            references.append(f"Business Impact: {issue['llm_business_impact'][:100]}")
+        if issue.get('llm_attack_scenario'):
+            references.append(f"Attack Scenario: {issue['llm_attack_scenario'][:100]}")
+        
+        if references:
+            finding['references'] = references
+        
+        findings.append(finding)
+    
+    # Generate SARIF
+    formatter = SARIFFormatter(tool_name="TerraSecure", tool_version=__version__)
+    sarif_output = formatter.format(findings, scan_path=scan_path)
+    
+    # Output
+    sarif_json = json.dumps(sarif_output, indent=2)
+    
+    if output_file:
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(sarif_json)
+        
+        # Summary for console
+        num_rules = len(sarif_output['runs'][0]['tool']['driver']['rules'])
+        num_results = len(sarif_output['runs'][0]['results'])
+        
+        print(f"\n{Fore.CYAN}📊 SARIF Output Generated{Style.RESET_ALL}")
+        print(f"{'='*60}")
+        print(f"Version:  SARIF 2.1.0")
+        print(f"Rules:    {num_rules}")
+        print(f"Results:  {num_results}")
+        print(f"File:     {output_file}")
+        print(f"\n{Fore.GREEN}✅ Ready for GitHub Security upload{Style.RESET_ALL}")
+        print(f"\n💡 Tip: Upload this file to GitHub Security tab:")
+        print(f"   gh api repos/${{OWNER}}/${{REPO}}/code-scanning/sarifs \\")
+        print(f"     --input {output_file}")
+        
+    else:
+        # Print to stdout
+        print(sarif_json)
+
 
 def get_severity_color(severity):
     """Get colorama color for severity"""
@@ -175,6 +287,7 @@ def get_severity_color(severity):
         'LOW': Fore.GREEN
     }
     return colors.get(severity, Fore.WHITE)
+
 
 def get_exit_code(results, fail_on):
     """Determine exit code based on findings"""
@@ -191,6 +304,7 @@ def get_exit_code(results, fail_on):
         return 1
     
     return 0
+
 
 if __name__ == '__main__':
     scan()

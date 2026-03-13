@@ -1,0 +1,156 @@
+name: TerraSecure Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
+      - '.github/workflows/terrasecure.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**/*.tf'
+      - '**/*.tfvars'
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: read
+  security-events: write  # Required for SARIF upload
+  pull-requests: write    # For PR comments
+
+jobs:
+  terrasecure-scan:
+    name: TerraSecure Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install TerraSecure
+        run: |
+          pip install -r requirements.txt
+          echo " TerraSecure dependencies installed"
+      
+      - name: Run TerraSecure Scan
+        id: scan
+        run: |
+          echo " Scanning Terraform files..."
+          python src/cli.py . --format sarif --output terrasecure.sarif
+          
+          # Also generate text report for PR comment
+          python src/cli.py . --format text --output scan-report.txt || true
+          
+          echo " Scan complete"
+        continue-on-error: true
+      
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: terrasecure.sarif
+          category: terrasecure
+      
+      - name: Upload SARIF as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terrasecure-sarif-${{ github.run_number }}
+          path: |
+            terrasecure.sarif
+            scan-report.txt
+          retention-days: 90
+      
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request' && always()
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read SARIF file
+            const sarif = JSON.parse(fs.readFileSync('terrasecure.sarif', 'utf8'));
+            const results = sarif.runs[0].results;
+            const rules = sarif.runs[0].tool.driver.rules;
+            
+            // Count by severity
+            const critical = results.filter(r => r.level === 'error' && 
+              rules.find(rule => rule.id === r.ruleId)?.properties['security-severity'] === '9.0'
+            ).length;
+            const high = results.filter(r => r.level === 'error' && 
+              rules.find(rule => rule.id === r.ruleId)?.properties['security-severity'] === '7.0'
+            ).length;
+            const medium = results.filter(r => r.level === 'warning').length;
+            
+            // Build comment
+            let comment = '##  TerraSecure Security Scan Results\n\n';
+            
+            if (results.length === 0) {
+              comment += ' **No security issues found!**\n\n';
+              comment += 'All Terraform resources passed security checks.\n';
+            } else {
+              comment += '###  Summary\n\n';
+              comment += `- **Total Issues:** ${results.length}\n`;
+              if (critical > 0) comment += `- 🔴 **Critical:** ${critical}\n`;
+              if (high > 0) comment += `- 🟠 **High:** ${high}\n`;
+              if (medium > 0) comment += `- 🟡 **Medium:** ${medium}\n`;
+              comment += '\n';
+              
+              comment += '###  Top Issues\n\n';
+              
+              // Show top 5 issues
+              results.slice(0, 5).forEach((result, idx) => {
+                const rule = rules.find(r => r.id === result.ruleId);
+                const severity = rule?.properties['security-severity'];
+                const icon = severity === '9.0' ? '🔴' : severity === '7.0' ? '🟠' : '🟡';
+                
+                comment += `${idx + 1}. ${icon} **${result.message.text}**\n`;
+                comment += `   - File: \`${result.locations[0].physicalLocation.artifactLocation.uri}\`\n`;
+                comment += `   - Line: ${result.locations[0].physicalLocation.region.startLine}\n`;
+                if (result.properties?.ml_risk_score) {
+                  comment += `   - ML Risk: ${(result.properties.ml_risk_score * 100).toFixed(0)}%\n`;
+                }
+                comment += '\n';
+              });
+              
+              if (results.length > 5) {
+                comment += `\n_... and ${results.length - 5} more issues_\n`;
+              }
+              
+              comment += '\n---\n';
+              comment += ' **Full Report:** Check the [Security tab](';
+              comment += `https://github.com/${{ github.repository }}/security/code-scanning) `;
+              comment += 'for detailed findings.\n';
+            }
+            
+            // Post comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+      
+      - name: Fail if critical issues found
+        if: always()
+        run: |
+          # Check if any critical issues exist
+          CRITICAL=$(python -c "import json; sarif=json.load(open('terrasecure.sarif')); print(sum(1 for r in sarif['runs'][0]['results'] if r.get('level') == 'error'))")
+          
+          if [ "$CRITICAL" -gt "0" ]; then
+            echo " Found $CRITICAL critical/high severity issues"
+            echo "::error::TerraSecure found $CRITICAL critical/high severity security issues"
+            exit 1
+          else
+            echo " No critical issues found"
+          fi
