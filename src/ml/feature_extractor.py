@@ -1,8 +1,3 @@
-"""
-ML Feature Extractor - 50 Security Features
-Enhanced version with comprehensive security checks
-"""
-
 class SecurityFeatureExtractor:
     """Extract 50 security features from Terraform resources"""
     
@@ -69,7 +64,6 @@ class SecurityFeatureExtractor:
         features['ecs_task_privilege_escalation'] = self._check_ecs_privileges(resource_type, props)
         features['api_gateway_no_waf'] = self._check_api_gateway_waf(resource_type, props)
         features['lambda_env_vars_unencrypted'] = self._check_lambda_env_encryption(resource_type, props)
-        
         return features
 
     
