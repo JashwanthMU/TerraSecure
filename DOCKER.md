@@ -2,7 +2,7 @@
 
 Official Docker image for TerraSecure - AI-Powered Terraform Security Scanner
 
-## 🚀 Quick Start
+##  Quick Start
 ```bash
 # Pull the image
 docker pull ghcr.io/jashwanthmu/terrasecure:latest
@@ -17,29 +17,29 @@ docker run --rm -v $(pwd):/scan:ro ghcr.io/jashwanthmu/terrasecure:latest /scan 
 docker run --rm -v $(pwd):/scan:ro -v $(pwd):/output ghcr.io/jashwanthmu/terrasecure:latest /scan --format sarif --output /output/results.sarif
 ```
 
-## 📦 Available Tags
+##  Available Tags
 
 - `latest` - Latest stable release
 - `1.0.0` - Specific version
 - `develop` - Development branch (unstable)
 
-## 🔒 Features
+##  Features
 
-- ✅ **ML-Powered**: 92% accuracy with pre-trained model
-- ✅ **AI Explanations**: Business impact and attack scenarios
-- ✅ **Multi-Format**: Text, JSON, SARIF output
-- ✅ **Offline**: No external API dependencies
-- ✅ **Fast**: <100ms per resource prediction
-- ✅ **Secure**: Non-root user, minimal attack surface
+-  **ML-Powered**: 92% accuracy with pre-trained model
+-  **AI Explanations**: Business impact and attack scenarios
+-  **Multi-Format**: Text, JSON, SARIF output
+-  **Offline**: No external API dependencies
+-  **Fast**: <100ms per resource prediction
+-  **Secure**: Non-root user, minimal attack surface
 
-## 📊 Image Details
+##  Image Details
 
 - **Size**: ~300MB
 - **Base**: Python 3.11-slim
 - **Architecture**: linux/amd64
 - **User**: Non-root (uid 1000)
 
-## 🎯 Usage Examples
+##  Usage Examples
 
 ### CI/CD Integration
 
@@ -66,13 +66,3 @@ docker.image('ghcr.io/jashwanthmu/terrasecure:latest').inside {
     sh 'terrasecure . --format json --output report.json'
 }
 ```
-
-## 📚 Documentation
-
-- [GitHub Repository](https://github.com/JashwanthMU/TerraSecure)
-- [Documentation](https://github.com/JashwanthMU/TerraSecure/blob/main/README.md)
-- [Issue Tracker](https://github.com/JashwanthMU/TerraSecure/issues)
-
-## 📝 License
-
-MIT License - see [LICENSE](https://github.com/JashwanthMU/TerraSecure/blob/main/LICENSE)
