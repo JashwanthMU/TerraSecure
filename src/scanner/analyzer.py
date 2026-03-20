@@ -1,3 +1,7 @@
+import os
+import json
+from typing import Dict, List, Any
+from pathlib import Path
 from scanner.parser import TerraformParser
 from rules.security_rules import SecurityRules
 
