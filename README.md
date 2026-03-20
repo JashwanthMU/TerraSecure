@@ -250,7 +250,7 @@ Severity Breakdown:
   High:     4
   Medium:   2
 
-Detailed Findings (with AI Analysis)
+Detailed Findings
 ============================================================
 
 [CRITICAL] S3 bucket with sensitive naming is publicly accessible
@@ -320,7 +320,7 @@ Tested on:
 | Offline Mode | YES | YES | YES |
 | SARIF Output | YES | YES | YES |
 | GitHub Action | YES | YES | YES |
-| Speed | Fast | Fast | **Fastest** |
+| Speed | Fast | Fast | Fast |
 
 ---
 
@@ -367,7 +367,7 @@ docker.image('ghcr.io/jashwanthmu/terrasecure:latest').inside {
 
 ##  Contributing
 
-Contributions welcome! 
+Contributions welcomed! 
 ```bash
 # Setup development environment
 git clone https://github.com/JashwanthMU/TerraSecure.git
@@ -409,8 +409,8 @@ MIT License - see [LICENSE](LICENSE)
 
 <div align="center">
 
-** Star this repo if TerraSecure helped secure your infrastructure!**
+**Star this repo if TerraSecure helped secure your infrastructure!**
 
-by [JashwanthMU](https://github.com/JashwanthMU)
+For a proactive shift left progress,by [JashwanthMU](https://github.com/JashwanthMU)
 
 </div>
