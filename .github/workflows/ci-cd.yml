@@ -39,7 +39,7 @@ jobs:
         run: |
           python src/cli.py --help
       
-      - name: 🔍 Test Scan (expect findings)
+      - name: 🔍 Test Scan
         run: |
           echo "Running scan on examples/vulnerable (should find issues)..."
           python src/cli.py examples/vulnerable || true
@@ -50,6 +50,7 @@ jobs:
           python src/cli.py examples/vulnerable --format json --output test-results.json || true
           if [ -f "test-results.json" ]; then
             echo "✅ JSON report generated"
+            echo "Preview:"
             cat test-results.json | head -50
           fi
       

@@ -1,4 +1,8 @@
-import hcl2
+try:
+    import hcl2
+except ImportError:
+    import hcl2 as hcl2_alt
+    hcl2 = hcl2_alt
 import json
 import os
 

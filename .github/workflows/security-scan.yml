@@ -40,45 +40,24 @@ jobs:
             ls -lh models/terrasecure_production_v1.0.pkl
           fi
       
-      - name: 🔍 Run TerraSecure Scan (Text)
+      - name: 🔍 Run TerraSecure Scan
         run: |
           echo "Running security scan..."
-          python src/cli.py examples/vulnerable || {
-            echo "⚠️  Scan found security issues (expected)"
-          }
+          python src/cli.py examples/vulnerable || true
+          echo "✅ Scan completed"
       
       - name: 📄 Generate SARIF Report
         run: |
           python src/cli.py examples/vulnerable \
             --format sarif \
-            --output terrasecure-results.sarif || {
-            echo "⚠️  Scan completed with findings"
-          }
+            --output terrasecure-results.sarif || true
           
-          # Verify SARIF was created
           if [ -f "terrasecure-results.sarif" ]; then
-            echo "✅ SARIF report generated"
+            echo "✅ SARIF report generated successfully"
             ls -lh terrasecure-results.sarif
-            head -20 terrasecure-results.sarif
           else
-            echo "❌ SARIF report not generated - creating minimal report"
-            # Create minimal SARIF if generation failed
-            cat > terrasecure-results.sarif << 'EOF'
-{
-  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
-  "version": "2.1.0",
-  "runs": [{
-    "tool": {
-      "driver": {
-        "name": "TerraSecure",
-        "version": "2.0.0",
-        "informationUri": "https://github.com/JashwanthMU/TerraSecure"
-      }
-    },
-    "results": []
-  }]
-}
-EOF
+            echo "⚠️ SARIF not generated, creating empty report"
+            echo '{"version":"2.1.0","runs":[{"tool":{"driver":{"name":"TerraSecure"}},"results":[]}]}' > terrasecure-results.sarif
           fi
       
       - name: 📤 Upload SARIF to GitHub Security
@@ -88,11 +67,11 @@ EOF
           sarif_file: terrasecure-results.sarif
           category: terrasecure
       
-      - name: 📊 Display Summary
+      - name: ✅ Scan Summary
         if: always()
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "🔍 TerraSecure Security Scan Complete"
+          echo "✅ TerraSecure Security Scan Complete"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "✅ SARIF uploaded to Security tab"
-          echo "🔗 View at: https://github.com/${{ github.repository }}/security/code-scanning"
+          echo "📊 Results uploaded to Security tab"
+          echo "🔗 https://github.com/${{ github.repository }}/security/code-scanning"

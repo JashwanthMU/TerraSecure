@@ -11,8 +11,8 @@ scikit-learn==1.4.0
 xgboost==2.0.3
 joblib==1.3.2
 
-# Terraform Parsing
-hcl2==4.3.2
+# Terraform Parsing 
+python-hcl2==4.3.4
 
 # AWS Bedrock Integration
 boto3==1.34.144
