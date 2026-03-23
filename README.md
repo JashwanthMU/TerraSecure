@@ -66,10 +66,6 @@
 - [Comparison](#comparison)
 - [CI/CD Integration](#cicd-integration)
 - [Documentation](#documentation)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [Community](#community)
-- [License](#license)
 
 </details>
 
