@@ -238,10 +238,12 @@ flowchart LR
         FEATURES[50 Security<br/>Features]
         MODEL[XGBoost<br/>5-Fold CV]
         EXPORT[Model Export<br/>177KB]
+  
         DATA --> FEATURES
         FEATURES --> MODEL
         MODEL --> EXPORT
     end
+  
     subgraph Inference["Inference"]
         RESOURCE[Terraform<br/>Resource]
         EXTRACT[Feature<br/>Extraction]
@@ -252,6 +254,7 @@ flowchart LR
         EXTRACT --> PREDICT
         PREDICT --> SCORE
     end
+  
     style Training fill:#e3f2fd
     style Inference fill:#fff8e1
 ```
