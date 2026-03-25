@@ -1,9 +1,6 @@
 <div align="center">
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/🛡️_TERRASECURE-AI_Powered_Security_Scanner-4A90E2?style=for-the-badge&labelColor=1a1a1a">
-  <img alt="TerraSecure" src="https://img.shields.io/badge/🛡️_TERRASECURE-AI_Powered_Security_Scanner-4A90E2?style=for-the-badge&labelColor=f0f0f0">
-</picture>
+  
+<img src="https://github.com/JashwanthMU/TerraSecure/blob/main/assets/TerraSecure.png" width="550"/>
 
 <h3>Intelligent Security for Infrastructure as Code</h3>
 
