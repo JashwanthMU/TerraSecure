@@ -391,7 +391,7 @@ Every finding includes:
 
 ### Option 1: Docker
 ```bash
-docker pull ghcr.io/jashwanthmu/terrasecure:latest
+docker pull jashwanthmu/terrasecure:latest
 ```
 
 ### Option 2: GitHub action
@@ -841,6 +841,6 @@ python scripts/build_production_model.py
 
 ---
 
-© 2026 Jashwanth M U. Released under the MIT License.
+© 2026 Jashwanth M U. 
 
 </div>
