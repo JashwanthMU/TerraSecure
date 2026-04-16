@@ -111,7 +111,6 @@ data "aws_availability_zones" "available" {
 
 resource "aws_eip" "eip" {
   instance = aws_instance.web-server.id
-  vpc      = true
 
   tags = local.tags
 }
