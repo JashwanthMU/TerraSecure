@@ -18,60 +18,60 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: 📥 Checkout code
+      - name:  Checkout code
         uses: actions/checkout@v4
       
-      - name: 🐍 Set up Python 3.11
+      - name:  Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       
-      - name: 📦 Install TerraSecure
+      - name:  Install TerraSecure
         run: |
           pip install -r requirements.txt
       
-      - name: 🤖 Build ML model
+      - name:  Build ML model
         run: |
           if [ ! -f "models/terrasecure_production_v1.0.pkl" ]; then
-            echo "⚙️  Building ML model..."
+            echo "  Building ML model..."
             python scripts/build_production_model.py
           else
-            echo "✅ ML model exists"
+            echo " ML model exists"
             ls -lh models/terrasecure_production_v1.0.pkl
           fi
       
-      - name: 🔍 Run TerraSecure Scan
+      - name:  Run TerraSecure Scan
         run: |
           echo "Running security scan..."
           python src/cli.py examples/vulnerable || true
-          echo "✅ Scan completed"
+          echo " Scan completed"
       
-      - name: 📄 Generate SARIF Report
+      - name:  Generate SARIF Report
         run: |
           python src/cli.py examples/vulnerable \
             --format sarif \
             --output terrasecure-results.sarif || true
           
           if [ -f "terrasecure-results.sarif" ]; then
-            echo "✅ SARIF report generated successfully"
+            echo " SARIF report generated successfully"
             ls -lh terrasecure-results.sarif
           else
-            echo "⚠️ SARIF not generated, creating empty report"
+            echo " SARIF not generated, creating empty report"
             echo '{"version":"2.1.0","runs":[{"tool":{"driver":{"name":"TerraSecure"}},"results":[]}]}' > terrasecure-results.sarif
           fi
       
-      - name: 📤 Upload SARIF to GitHub Security
+      - name:  Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: terrasecure-results.sarif
           category: terrasecure
       
-      - name: ✅ Scan Summary
+      - name:  Scan Summary
         if: always()
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "✅ TerraSecure Security Scan Complete"
+          echo " TerraSecure Security Scan Complete"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "📊 Results uploaded to Security tab"
-          echo "🔗 https://github.com/${{ github.repository }}/security/code-scanning"
+          echo " Results uploaded to Security tab"
+          echo " https://github.com/${{ github.repository }}/security/code-scanning"
