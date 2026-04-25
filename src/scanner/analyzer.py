@@ -6,7 +6,6 @@ from scanner.parser import TerraformParser
 from rules.security_rules import SecurityRules
 
 
-# Machine Learning
 try:
     from ml.ml_analyzer import MLAnalyzer
     ML_AVAILABLE = True
@@ -14,7 +13,6 @@ except ImportError:
     ML_AVAILABLE = False
     print("   ML analyzer not available")
 
-# LLM Integration - Try Bedrock first, fallback to legacy
 LLM_AVAILABLE = False
 LLMAnalyzer = None
 
@@ -37,8 +35,7 @@ class SecurityAnalyzer:
     
     def __init__(self):
         """Initialize security analyzer with all components"""
-    
-        # Initialize ML analyzer
+
         if ML_AVAILABLE:
             try:
                 self.ml_analyzer = MLAnalyzer()
@@ -47,8 +44,7 @@ class SecurityAnalyzer:
                 self.ml_analyzer = None
         else:
             self.ml_analyzer = None
-    
-        # Initialize LLM analyzer
+
         if LLM_AVAILABLE and LLMAnalyzer:
             try:
                 self.llm_analyzer = LLMAnalyzer()
@@ -57,8 +53,7 @@ class SecurityAnalyzer:
                 self.llm_analyzer = None
         else:
             self.llm_analyzer = None
-    
-        # Initialize parsers and rules
+
         self.parser = TerraformParser()
         self.rules = SecurityRules()
     
@@ -86,8 +81,7 @@ class SecurityAnalyzer:
         for resource in resources:
             resource_type = resource.get('type', 'unknown')
             resource_name = resource.get('name', 'unknown')
-        
-            # Get rules - handle different SecurityRules implementations
+
             if hasattr(self.rules, 'items'):
                 rules_dict = dict(self.rules.items())
             elif hasattr(self.rules, 'get_all_rules'):
@@ -95,24 +89,21 @@ class SecurityAnalyzer:
             elif hasattr(self.rules, 'rules'):
                 rules_dict = self.rules.rules
             else:
-                print(f"⚠️  Warning: SecurityRules has no accessible rules")
+                print(f"  Warning: SecurityRules has no accessible rules")
                 rules_dict = {}
-        
-            # Apply each rule
+
             for rule_name, rule_func in rules_dict.items():
                 try:
                     finding = rule_func(resource)
                 
                     if finding:
-                        # Get ML risk score
                         ml_result = {}
                         if self.ml_analyzer:
                             try:
                                 ml_result = self.ml_analyzer.analyze(resource)
                             except Exception as e:
-                                print(f"⚠️  ML analysis failed: {e}")
-                    
-                        # Get LLM explanation
+                                print(f"  ML analysis failed: {e}")
+
                         llm_result = {}
                         if self.llm_analyzer:
                             try:
@@ -120,9 +111,8 @@ class SecurityAnalyzer:
                                     resource, ml_result, finding
                                 )
                             except Exception as e:
-                                print(f"⚠️  LLM analysis failed: {e}")
+                                print(f"  LLM analysis failed: {e}")
                     
-                        # Combine results
                         issue = {
                             **finding,
                             'resource_type': resource_type,
@@ -133,12 +123,11 @@ class SecurityAnalyzer:
                     
                         issues.append(issue)
                     
-                        # Update stats
                         severity = finding.get('severity', 'MEDIUM')
                         stats[severity] = stats.get(severity, 0) + 1
                     
                 except Exception as e:
-                    print(f"⚠️  Error applying rule {rule_name}: {e}")
+                    print(f"  Error applying rule {rule_name}: {e}")
                     continue
     
         return {
