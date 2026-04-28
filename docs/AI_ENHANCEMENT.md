@@ -104,7 +104,7 @@ Risk Score: 0.95 (95% confidence this is exploitable)
 └─────────────────┘
 ↓
 ┌─────────────────┐
-│  AI Enhancement │ ← YOU ARE HERE
+│  AI Enhancement │ 
 │   (bedrock_     │
 │    analyzer.py) │
 └─────────────────┘
@@ -1108,7 +1108,7 @@ print(estimate_monthly_cost(100000))  # 100K scans/month
 ### C. AWS Regions Supporting Bedrock
 SUPPORTED:
 
-us-east-1 (N. Virginia)     ← RECOMMENDED
+us-east-1 (N. Virginia)    
 us-west-2 (Oregon)
 eu-west-1 (Ireland)
 eu-central-1 (Frankfurt)
@@ -1120,7 +1120,7 @@ NOT SUPPORTED:
 us-east-2 (Ohio)
 us-west-1 (N. California)
 eu-west-2 (London)
-... (check AWS docs for latest)
+
 
 
 ### D. Fallback Quality Benchmarks
