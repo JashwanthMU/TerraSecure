@@ -117,7 +117,7 @@ Traditional security scanners generate too many false positives. Security teams 
 
 ### Real-World Impact
 ```diff
-BEFORE (Checkov):
+BEFORE TerraSecure (Checkov):
 ! 147 issues found (22 false positives)
 ! Security team spends 4 hours triaging
 ! 3 real issues missed in the noise
@@ -772,27 +772,6 @@ jobs:
 - [GitHub Action Guide](ACTION_README.md) - CI/CD integration
 - [Architecture](docs/ARCHITECTURE.md) - System design and ML model
 - [visualizations](visualizations) - visualizations of ML performance on TerraSecure
-
-
-### Advanced topics(will be updated soon!)
-
-- [ML Model Training](docs/ML_MODEL.md) - How the model was built
-- [AI Enhancement](docs/AI_ENHANCEMENT.md) - AWS Bedrock integration
-- [Custom Rules](docs/CUSTOM_RULES.md) - Extend detection patterns
-- [SARIF Format](docs/SARIF.md) - GitHub Security integration
-
----
-
-## Contribution
-Contributions welcomed!
-
-- **Bug reports** - Found an issue? [Open an issue](https://github.com/JashwanthMU/TerraSecure/issues/new)
-- **Feature requests** - Have an idea? [Start a discussion](https://github.com/JashwanthMU/TerraSecure/discussions)
-- **Documentation** - Improve our docs
-- **Code contributions** - Fix bugs or add features
-
-
-## Acknowledgments
 
 ### Data Sources:
 
