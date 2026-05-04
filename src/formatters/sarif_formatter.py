@@ -3,43 +3,15 @@ from typing import List, Dict, Any
 
 
 class SARIFFormatter:
-    """
-    Format security findings as SARIF 2.1.0
-    
-    SARIF (Static Analysis Results Interchange Format) is the standard
-    format for security findings in GitHub Security tab.
-    """
     
     def __init__(self, tool_name: str = "TerraSecure", tool_version: str = "2.0.0"):
-        """
-        Initialize SARIF formatter
-        
-        Args:
-            tool_name: Name of the security tool
-            tool_version: Version of the tool
-        """
         self.tool_name = tool_name
         self.tool_version = tool_version
     
     def format(self, findings: List[Dict[str, Any]], scan_path: str = ".") -> Dict[str, Any]:
-        """
-        Format findings as SARIF 2.1.0
-        
-        Args:
-            findings: List of security findings
-            scan_path: Path that was scanned
-            
-        Returns:
-            SARIF-formatted output as dict
-        """
-        
-        # Build rules from unique findings
+
         rules = self._build_rules(findings)
-        
-        # Build results
         results = self._build_results(findings)
-        
-        # Build SARIF document
         sarif = {
             "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
             "version": "2.1.0",
@@ -70,8 +42,6 @@ class SARIFFormatter:
             
             if rule_id not in rules_dict:
                 severity = finding.get('severity', 'warning').lower()
-                
-                # Map severity to SARIF level
                 sarif_level = {
                     'critical': 'error',
                     'high': 'error',
@@ -104,7 +74,6 @@ class SARIFFormatter:
         return list(rules_dict.values())
     
     def _build_results(self, findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Build SARIF results from findings"""
         
         results = []
         
@@ -112,27 +81,20 @@ class SARIFFormatter:
             rule_id = finding.get('rule_id', 'TERRAFORM-SECURITY')
             severity = finding.get('severity', 'warning').lower()
             
-            # Map severity to SARIF level
             sarif_level = {
                 'critical': 'error',
                 'high': 'error',
                 'medium': 'warning',
                 'low': 'note'
             }.get(severity, 'warning')
-            
-            # Ensure line number is >= 1 
+
             line_number = max(1, finding.get('line', 1))
-            
-            # Build message text
             message_text = finding.get('title', 'Security issue detected')
-            
-            # Add references to message if available
             if finding.get('references'):
                 refs = finding['references']
                 if isinstance(refs, list) and refs:
                     message_text += "\n\n" + "\n".join(refs)
-            
-            # Build result
+
             result = {
                 "ruleId": rule_id,
                 "level": sarif_level,
@@ -165,7 +127,6 @@ class SARIFFormatter:
                 }
             }
             
-            # Add remediation as fix if available
             if finding.get('remediation'):
                 result["fixes"] = [
                     {
@@ -202,17 +163,5 @@ def format_sarif(findings: List[Dict[str, Any]],
                  tool_name: str = "TerraSecure",
                  tool_version: str = "2.0.0",
                  scan_path: str = ".") -> Dict[str, Any]:
-    """
-    Convenience function to format findings as SARIF
-    
-    Args:
-        findings: List of security findings
-        tool_name: Name of the security tool
-        tool_version: Version of the tool
-        scan_path: Path that was scanned
-        
-    Returns:
-        SARIF-formatted output as dict
-    """
     formatter = SARIFFormatter(tool_name, tool_version)
     return formatter.format(findings, scan_path)
