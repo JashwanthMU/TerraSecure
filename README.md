@@ -46,9 +46,9 @@ TerraSecure is an **intelligent, shift-left security scanner** for Terraform and
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Traditional Scanner:  "Security group allows SSH from 0.0.0.0/0"
-│  TerraSecure:          92% confidence · CRITICAL · Capital One-style
-│                        attack vector · GDPR exposure · 3-step fix
+│  Traditional Scanner:"Security group allows SSH from 0.0.0.0/0"
+│  TerraSecure:         "92% confidence · CRITICAL · Capital One-style
+│                       attack vector · GDPR exposure · 3-step fix"
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -678,15 +678,12 @@ Areas where contributions make the most impact:
 
 ## License
 
-[MIT License](LICENSE) — © 2026 Jashwanth M U
+[MIT License](LICENSE) © 2026 Jashwanth M U
 
 ---
 
 <div align="center">
 
 **TerraSecure** · Shift security left. Scan at build time. Stop breaches before they start.
-
-[![Star on GitHub](https://img.shields.io/github/stars/JashwanthMU/TerraSecure?style=social)](https://github.com/JashwanthMU/TerraSecure)
-[![Fork](https://img.shields.io/github/forks/JashwanthMU/TerraSecure?style=social)](https://github.com/JashwanthMU/TerraSecure/fork)
 
 </div>
