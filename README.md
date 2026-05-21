@@ -45,11 +45,9 @@ Traditional IaC scanners like Checkov and Trivy are rule-based engines that gene
 TerraSecure is an **intelligent, shift-left security scanner** for Terraform and HCL Infrastructure as Code. It integrates directly into developer workflows — as a GitHub Action, Docker container, or CLI tool — and surfaces security issues with the context a developer actually needs to fix them.
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  Traditional Scanner:"Security group allows SSH from 0.0.0.0/0"
-│  TerraSecure:         "92% confidence · CRITICAL · Capital One-style
-│                       attack vector · GDPR exposure · 3-step fix"
-└─────────────────────────────────────────────────────────────────┘
+Traditional Scanner:"Security group allows SSH from 0.0.0.0/0"
+TerraSecure:         "92% confidence · CRITICAL · Capital One-style
+                       attack vector · GDPR exposure · 3-step fix"
 ```
 
 **Three layers of intelligence:**
