@@ -30,7 +30,7 @@
 
 ## The Problem with Cloud Security Today
 
-> **$4.88M** — average cost of a cloud data breach in 2024 *(IBM Cost of a Data Breach Report)*
+> **$4.88M** average cost of a cloud data breach in 2024 *(IBM Cost of a Data Breach Report)*
 
 > **82%** of cloud breaches trace back to misconfigurations in Infrastructure as Code *(Gartner)*
 
@@ -79,7 +79,7 @@ TerraSecure:         "92% confidence · CRITICAL · Capital One-style
 
 ## ⚡ Quick Start
 
-### GitHub Actions (Recommended)
+### GitHub Actions 
 
 Add to `.github/workflows/security.yml`:
 
@@ -156,36 +156,36 @@ TerraSecure uses a **three-layer detection pipeline**:
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                          INPUT LAYER                                │
-│   Terraform Files (.tf)  ·  HCL Configs  ·  Terraform Modules      │
+│   Terraform Files (.tf)  ·  HCL Configs  ·  Terraform Modules       │
 └───────────────────────────────┬─────────────────────────────────────┘
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                       DETECTION ENGINE                              │
 │                                                                     │
-│  ┌─────────────────┐   ┌──────────────────┐   ┌─────────────────┐  │
-│  │   Rule Engine   │   │  Feature Extractor│   │   ML Model      │  │
-│  │  50+ Patterns   │──▶│  50 Security      │──▶│  XGBoost        │  │
-│  │  Network/IAM/   │   │  Features from    │   │  92.45% Acc.    │  │
-│  │  Storage/Secrets│   │  HCL Resources    │   │  <100ms Infer.  │  │
-│  └─────────────────┘   └──────────────────┘   └─────────────────┘  │
+│  ┌─────────────────┐   ┌──────────────────┐   ┌─────────────────┐   │
+│  │   Rule Engine   │   │ Feature Extractor│   │   ML Model      │   │
+│  │  50+ Patterns   │──▶│ 50 Security     │──▶│  XGBoost        │   │
+│  │  Network/IAM/   │   │ Features from    │   │  92.45% Acc.    │   │
+│  │  Storage/Secrets│   │ HCL Resources    │   │  <100ms Infer.  │   │
+│  └─────────────────┘   └──────────────────┘   └─────────────────┘   │
 └───────────────────────────────┬─────────────────────────────────────┘
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        AI ENHANCEMENT                               │
 │                                                                     │
-│  ┌──────────────────┐   ┌──────────────────┐   ┌────────────────┐  │
-│  │  AWS Bedrock     │   │  Expert Templates │   │ Response Cache │  │
-│  │  Claude 3 Haiku  │──▶│  Real Breach DB   │──▶│ 90% Cost Save  │  │
-│  │  Business Impact │   │  (C1/Uber/Tesla)  │   │ Offline Fallbk │  │
-│  └──────────────────┘   └──────────────────┘   └────────────────┘  │
+│  ┌──────────────────┐   ┌──────────────────┐   ┌────────────────┐   │
+│  │  AWS Bedrock     │   │  Expert Templates│   │ Response Cache │   │
+│  │  Claude 3 Haiku  │──▶│ Real Breach DB   │──▶│ 90% Cost Save │   │
+│  │  Business Impact │   │  (C1/Uber/Tesla) │   │ Offline Fallbk │   │
+│  └──────────────────┘   └──────────────────┘   └────────────────┘   │
 └───────────────────────────────┬─────────────────────────────────────┘
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         OUTPUT LAYER                                │
-│   Text (Human)  ·  JSON (Automation)  ·  SARIF 2.1.0 (GitHub)     │
+│   Text (Human)  ·  JSON (Automation)  ·  SARIF 2.1.0 (GitHub)       │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -335,21 +335,21 @@ Every detected issue includes four AI-generated sections:
 
 | Metric | Value | Industry Target | Status |
 |---|---|---|---|
-| Accuracy | **92.45%** | >85% | ✅ Exceeds |
-| Precision | **89.29%** | >80% | ✅ Exceeds |
-| Recall | **96.00%** | >90% | ✅ Exceeds |
-| F1 Score | **92.54%** | >85% | ✅ Exceeds |
-| False Positive Rate | **10.71%** | <15% | ✅ Excellent |
-| False Negative Rate | **4.00%** | <5% | ✅ Excellent |
-| Inference Speed | **<100ms/resource** | <200ms | ✅ Fast |
-| Model Size | **177 KB** | <1MB | ✅ Lightweight |
-| Memory Usage | **<512 MB RAM** | — | ✅ Container-friendly |
+| Accuracy | **92.45%** | >85% |   Exceeds |
+| Precision | **89.29%** | >80% |   Exceeds |
+| Recall | **96.00%** | >90% |   Exceeds |
+| F1 Score | **92.54%** | >85% |   Exceeds |
+| False Positive Rate | **10.71%** | <15% |   Excellent |
+| False Negative Rate | **4.00%** | <5% |   Excellent |
+| Inference Speed | **<100ms/resource** | <200ms |   Fast |
+| Model Size | **177 KB** | <1MB |   Lightweight |
+| Memory Usage | **<512 MB RAM** | — |   Container-friendly |
 
 **Tested at scale:** 10,000+ Terraform resources, nested module configurations, multi-file workspaces.
 
 ---
 
-## 📤 Output Examples
+## Output Examples
 
 ### Terminal (Text Mode)
 
