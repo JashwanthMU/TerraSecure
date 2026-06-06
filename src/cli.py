@@ -1,14 +1,3 @@
-"""
-TerraSecure CLI
----------------
-Command-line interface for TerraSecure security scanner
-
-Supports:
-- Text output (human readable with AI insights)
-- JSON output (machine readable)
-- SARIF output (GitHub Security integration)
-"""
-
 import click
 import json
 import sys
@@ -34,16 +23,7 @@ __version__ = "1.0.0"
               help='Save results to file')
 @click.option('--version', is_flag=True, help='Show version and exit')
 def scan(path, format, fail_on, output, version):
-    """
-    TerraSecure - Scan Terraform files for security issues
-    
-    Usage:
-        terrasecure scan ./terraform
-        terrasecure scan main.tf --format json
-        terrasecure scan . --fail-on high
-        terrasecure scan . --format sarif --output results.sarif
-    """
-    
+
     # Handle version flag
     if version:
         click.echo(f"TerraSecure v{__version__}")

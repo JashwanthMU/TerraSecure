@@ -1,6 +1,3 @@
-#############################
-# Variables
-#############################
 variable "region" {
   default = "eu-west-1"
 }
@@ -41,10 +38,6 @@ variable "bucket_name" {
 variable "key_pair" {
   default = "shay-key"
 }
-
-#############################
-# Locals
-#############################
 locals {
   base_name = "${var.environment}-${var.base_name}"
   tags = {
@@ -74,9 +67,6 @@ runcmd:
 EOF
 }
 
-#############################
-# Providers
-#############################
 terraform {
   required_providers {
     aws = {
@@ -94,9 +84,6 @@ provider "aws" {
   # profile = "${var.profile}" 
 }
 
-#############################
-# VPCs
-#############################
 resource "aws_vpc" "vpc" {
   cidr_block           = "172.33.0.0/16"
   instance_tenancy     = "default"
@@ -115,9 +102,6 @@ resource "aws_eip" "eip" {
   tags = local.tags
 }
 
-#############################
-# Internet Gateways
-#############################
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.vpc.id
   tags   = local.tags
@@ -129,9 +113,6 @@ resource "aws_route" "igw" {
   gateway_id             = aws_internet_gateway.igw.id
 }
 
-#############################
-# Subnets
-#############################
 resource "aws_subnet" "subnet1" {
   vpc_id            = aws_vpc.vpc.id
   availability_zone = data.aws_availability_zones.available.names[0]
@@ -140,9 +121,6 @@ resource "aws_subnet" "subnet1" {
   tags = merge(local.tags, { "Name" = "${local.tags.Name}-subnet1" })
 }
 
-#############################
-# Security Groups
-#############################
 resource "aws_security_group" "sg1" {
   name        = "sg1"
   description = "sg1"
@@ -177,9 +155,6 @@ resource "aws_security_group_rule" "ssh" {
   security_group_id = aws_security_group.sg1.id
 }
 
-#####################################
-# Policy Roles and Instance Policy
-#####################################
 resource "aws_iam_policy" "demo-policy" {
   name        = var.instance_policy
   path        = "/"
@@ -229,10 +204,7 @@ resource "aws_iam_instance_profile" "demo-profile" {
   name = var.instance_profile
   role = aws_iam_role.demo-role.name
 }
-#
-##############################
-# VMs
-#############################
+
 
 resource "aws_instance" "web-server" {
   ami           = var.ubuntu-ami
@@ -258,9 +230,6 @@ resource "aws_instance" "web-server" {
   tags = local.tags
 }
 
-#############################
-# Buckets
-#############################
 resource "aws_s3_bucket" "c-one-demo" {
   bucket        = var.bucket_name
   force_destroy = true
@@ -271,7 +240,6 @@ resource "aws_s3_bucket_acl" "acl" {
   acl    = "private"
 }
 
-# Upload the secret file
 resource "aws_s3_object" "object" {
   bucket = aws_s3_bucket.c-one-demo.id
   key    = "top_secret_file"
@@ -279,9 +247,6 @@ resource "aws_s3_object" "object" {
   etag   = filemd5("top_secret_file.csv")
 }
 
-#############################
-# Outputs
-#############################
 output "public_ip" {
   value = aws_eip.eip.public_ip
 }
@@ -292,4 +257,19 @@ output "instance_id" {
 
 output "bucket_name" {
   value = aws_s3_bucket.c-one-demo.id
+}
+resource "aws_s3_bucket" "customer_data" {
+  bucket = "customer-database-backup"
+  acl    = "public-read"
+}
+resource "aws_security_group" "ssh_access" {
+  name        = "ssh_access"
+  description = "Allow SSH from anywhere"
+  
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }

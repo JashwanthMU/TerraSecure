@@ -14,7 +14,7 @@ except ImportError:
     ML_AVAILABLE = False
     print("   ML analyzer not available")
 
-# LLM Integration - Try Bedrock first, fallback to legacy
+# LLM Integration - Try Bedrock first
 LLM_AVAILABLE = False
 LLMAnalyzer = None
 
@@ -95,7 +95,7 @@ class SecurityAnalyzer:
             elif hasattr(self.rules, 'rules'):
                 rules_dict = self.rules.rules
             else:
-                print(f"⚠️  Warning: SecurityRules has no accessible rules")
+                print(f"  Warning: SecurityRules has no accessible rules")
                 rules_dict = {}
         
             # Apply each rule
@@ -110,7 +110,7 @@ class SecurityAnalyzer:
                             try:
                                 ml_result = self.ml_analyzer.analyze(resource)
                             except Exception as e:
-                                print(f"⚠️  ML analysis failed: {e}")
+                                print(f"  ML analysis failed: {e}")
                     
                         # Get LLM explanation
                         llm_result = {}
@@ -120,7 +120,7 @@ class SecurityAnalyzer:
                                     resource, ml_result, finding
                                 )
                             except Exception as e:
-                                print(f"⚠️  LLM analysis failed: {e}")
+                                print(f"  LLM analysis failed: {e}")
                     
                         # Combine results
                         issue = {

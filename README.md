@@ -771,6 +771,7 @@ jobs:
 - [Docker Guide](DOCKER.md) - Container usage and deployment
 - [GitHub Action Guide](ACTION_README.md) - CI/CD integration
 - [Architecture](docs/ARCHITECTURE.md) - System design and ML model
+- [visualizations](visualizations) - visualizations of ML performance on TerraSecure
 
 
 ### Advanced topics(will be updated soon!)
