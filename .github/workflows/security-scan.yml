@@ -74,8 +74,4 @@ jobs:
           echo " TerraSecure Security Scan Complete"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo " Results uploaded to Security tab"
-<<<<<<< HEAD
           echo " https://github.com/${{ github.repository }}/security/code-scanning"
-=======
-          echo " https://github.com/${{ github.repository }}/security/code-scanning"
->>>>>>> 80ddd0dd20ef01adddb86e27c9cc0b3254db9ce4
