@@ -13,10 +13,7 @@ except ImportError:
     ML_AVAILABLE = False
     print("   ML analyzer not available")
 
-<<<<<<< HEAD
 # LLM Integration - Try Bedrock first
-=======
->>>>>>> 80ddd0dd20ef01adddb86e27c9cc0b3254db9ce4
 LLM_AVAILABLE = False
 LLMAnalyzer = None
 
@@ -107,12 +104,8 @@ class SecurityAnalyzer:
                                 ml_result = self.ml_analyzer.analyze(resource)
                             except Exception as e:
                                 print(f"  ML analysis failed: {e}")
-<<<<<<< HEAD
                     
                         # Get LLM explanation
-=======
-
->>>>>>> 80ddd0dd20ef01adddb86e27c9cc0b3254db9ce4
                         llm_result = {}
                         if self.llm_analyzer:
                             try:
