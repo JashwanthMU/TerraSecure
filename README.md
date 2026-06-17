@@ -22,7 +22,7 @@
 
 <br/>
 
-[**Quick Start**](#-quick-start) · [**Why TerraSecure**](#-why-terrasecure) · [**Architecture**](#-architecture) · [**Features**](#-features) · [**Benchmarks**](#-benchmarks) · [**CI/CD**](#-cicd-integration)
+[YouTube Vedio about TerraSecure](https://www.youtube.com/watch?v=HJcs78o56P4&t=25s)
 
 </div>
 
@@ -153,41 +153,81 @@ python src/cli.py infra/ --fail-on critical
 
 TerraSecure uses a **three-layer detection pipeline**:
 
+```mermaid
+flowchart TB
+    subgraph Input["  Input Sources"]
+        TF[Terraform Files]
+        HCL[HCL Configurations]
+        MOD[Terraform Modules]
+    end
+
+    subgraph Parser["  Parser Layer"]
+        HP[HCL Parser]
+        RE[Resource Extractor]
+        HP --> RE
+    end
+
+    subgraph Detection["  Detection Engine"]
+        RULES[Rule Engine<br/>50+ Security Patterns]
+        ML[ML Model<br/>XGBoost 92% Accuracy]
+        FEAT[Feature Extractor<br/>50 Security Features]
+        
+        RULES --> |Violations|FINDINGS
+        ML --> |Risk Scores|FINDINGS
+        FEAT --> ML
+    end
+
+    subgraph AI["  AI Analysis Layer"]
+        BEDROCK[AWS Bedrock<br/>Claude 3 Haiku]
+        FALLBACK[Intelligent Fallback<br/>Expert Templates]
+        CACHE[Response Cache<br/>90% Cost Savings]
+        
+        BEDROCK --> CACHE
+        CACHE --> |Cache Miss|BEDROCK
+        CACHE --> |Cache Hit|ENHANCE
+        FALLBACK --> ENHANCE
+    end
+
+    subgraph Output["  Output Formats"]
+        TEXT[Text Output<br/>Human-Readable]
+        JSON[JSON Output<br/>Machine-Readable]
+        SARIF[SARIF 2.1.0<br/>GitHub Security]
+    end
+
+    subgraph Integration["  Integration Points"]
+        GH[GitHub Actions]
+        DOCKER[Docker Container]
+        CLI[Command Line]
+        GHSEC[GitHub Security Tab]
+    end
+
+    TF --> HP
+    HCL --> HP
+    MOD --> HP
+    
+    RE --> RULES
+    RE --> FEAT
+    
+    FINDINGS[  Security Findings] --> AI
+    AI --> ENHANCE[Enhanced Findings<br/>with AI Context]
+    
+    ENHANCE --> TEXT
+    ENHANCE --> JSON
+    ENHANCE --> SARIF
+    
+    TEXT --> CLI
+    JSON --> DOCKER
+    SARIF --> GH
+    SARIF --> GHSEC
+    
+    style Input fill:#e1f5ff
+    style Parser fill:#fff3e0
+    style Detection fill:#ffebee
+    style AI fill:#f3e5f5
+    style Output fill:#e8f5e9
+    style Integration fill:#fce4ec
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                          INPUT LAYER                                │
-│   Terraform Files (.tf)  ·  HCL Configs  ·  Terraform Modules       │
-└───────────────────────────────┬─────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                       DETECTION ENGINE                              │
-│                                                                     │
-│  ┌─────────────────┐   ┌──────────────────┐   ┌─────────────────┐   │
-│  │   Rule Engine   │   │ Feature Extractor│   │   ML Model      │   │
-│  │  50+ Patterns   │──▶│ 50 Security     │──▶│  XGBoost        │   │
-│  │  Network/IAM/   │   │ Features from    │   │  92.45% Acc.    │   │
-│  │  Storage/Secrets│   │ HCL Resources    │   │  <100ms Infer.  │   │
-│  └─────────────────┘   └──────────────────┘   └─────────────────┘   │
-└───────────────────────────────┬─────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                        AI ENHANCEMENT                               │
-│                                                                     │
-│  ┌──────────────────┐   ┌──────────────────┐   ┌────────────────┐   │
-│  │  AWS Bedrock     │   │  Expert Templates│   │ Response Cache │   │
-│  │  Claude 3 Haiku  │──▶│ Real Breach DB   │──▶│ 90% Cost Save │   │
-│  │  Business Impact │   │  (C1/Uber/Tesla) │   │ Offline Fallbk │   │
-│  └──────────────────┘   └──────────────────┘   └────────────────┘   │
-└───────────────────────────────┬─────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                         OUTPUT LAYER                                │
-│   Text (Human)  ·  JSON (Automation)  ·  SARIF 2.1.0 (GitHub)       │
-└─────────────────────────────────────────────────────────────────────┘
-```
+
 
 ---
 
@@ -203,16 +243,154 @@ TerraSecure uses a **three-layer detection pipeline**:
 | MongoDB | 2017 | Exposed database, no auth | 26,000+ DBs held for ransom |
 
 **Model Architecture:**
-```
-265 labeled samples  →  50 engineered security features  →  XGBoost (5-fold CV)
-                                                              │
-                                                              ▼
-                                                         177 KB model file
-                                                         <100ms inference
+```mermaid
+flowchart LR
+    subgraph Training["  ML Training Pipeline"]
+        DATA[Training Data<br/>265 Samples]
+        BREACH[Real Breaches<br/>Capital One, Uber, Tesla]
+        FEAT_ENG[Feature Engineering<br/>50 Features]
+        XGBOOST[XGBoost Model<br/>5-Fold CV]
+        EVAL[Evaluation<br/>92.45% Accuracy]
+        
+        DATA --> FEAT_ENG
+        BREACH --> DATA
+        FEAT_ENG --> XGBOOST
+        XGBOOST --> EVAL
+        EVAL --> |Model Export|MODEL_FILE[terrasecure_v1.0.pkl<br/>177 KB]
+    end
+
+    subgraph Inference["  ML Inference"]
+        RESOURCE[Terraform Resource]
+        EXTRACT[Extract 50 Features]
+        PREDICT[Predict Risk]
+        SCORE[Risk Score<br/>0.0 - 1.0]
+        CONF[Confidence Score]
+        
+        RESOURCE --> EXTRACT
+        MODEL_FILE --> PREDICT
+        EXTRACT --> PREDICT
+        PREDICT --> SCORE
+        PREDICT --> CONF
+    end
+
+    style Training fill:#e3f2fd
+    style Inference fill:#fff8e1
 ```
 
 **Feature categories:** encryption state, network exposure, IAM permissiveness, logging configuration, naming patterns (data sensitivity signals), cross-service dependency risks.
 
+---
+
+### AI-Powered Finding Analysis
+
+Every detected issue includes four AI-generated sections:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  EXPLANATION     What is misconfigured and why it's risky   │
+│  BUSINESS IMPACT Financial, regulatory (GDPR/SOC2), and     │
+│                  reputational consequences                  │
+│  ATTACK SCENARIO How attackers exploit this — with real     │
+│                  breach examples (Capital One, etc.)        │
+│  DETAILED FIX    Step-by-step remediation with Terraform    │
+│                  code snippets                              │
+└─────────────────────────────────────────────────────────────┘
+```
+```mermaid
+sequenceDiagram
+    participant R as Resource
+    participant D as Detection Engine
+    participant M as ML Model
+    participant A as AI Analyzer
+    participant C as Cache
+    participant O as Output
+
+    R->>D: Scan Resource
+    D->>D: Apply Rules
+    D->>M: Extract Features
+    M->>M: Predict Risk
+    M-->>D: Risk Score (0.95)
+    
+    D->>A: Finding + Risk Score
+    A->>C: Check Cache
+    
+    alt Cache Hit
+        C-->>A: Cached Analysis
+    else Cache Miss
+        A->>A: Generate Prompt
+        A->>A: Call Bedrock/Fallback
+        A->>C: Store in Cache
+    end
+    
+    A-->>O: Enhanced Finding
+    O->>O: Format (Text/JSON/SARIF)
+    O-->>R: Results with AI Context
+```
+
+**Graceful degradation:** When AWS Bedrock is unavailable, TerraSecure falls back to expert-crafted breach-informed templates — no silent failures, full offline support.
+
+---
+
+## CI/CD Integration
+
+### GitHub Actions Flow
+```mermaid
+flowchart TB
+    subgraph Developer["  Developer Workflow"]
+        CODE[Write Terraform]
+        COMMIT[Git Commit]
+        PR[Create PR]
+    end
+
+    subgraph CI["  CI/CD Pipeline"]
+        TRIGGER[GitHub Actions Trigger]
+        CLONE[Clone Repository]
+        SCAN[TerraSecure Scan]
+        SARIF_GEN[Generate SARIF]
+    end
+
+    subgraph Analysis["  Analysis & Results"]
+        ML_CHECK[ML Risk Scoring]
+        AI_EXPLAIN[AI Analysis]
+        REPORT[Generate Report]
+    end
+
+    subgraph Enforcement["  Policy Enforcement"]
+        CRITICAL{Critical<br/>Issues?}
+        BLOCK[  Block PR]
+        APPROVE[  Allow PR]
+    end
+
+    subgraph Visibility["  Visibility"]
+        GH_SEC[GitHub Security Tab]
+        PR_COMMENT[PR Comments]
+        ARTIFACTS[Scan Artifacts]
+    end
+
+    CODE --> COMMIT
+    COMMIT --> PR
+    PR --> TRIGGER
+    TRIGGER --> CLONE
+    CLONE --> SCAN
+    SCAN --> ML_CHECK
+    ML_CHECK --> AI_EXPLAIN
+    AI_EXPLAIN --> REPORT
+    REPORT --> SARIF_GEN
+    SARIF_GEN --> CRITICAL
+    
+    CRITICAL -->|Yes| BLOCK
+    CRITICAL -->|No| APPROVE
+    
+    SARIF_GEN --> GH_SEC
+    REPORT --> PR_COMMENT
+    REPORT --> ARTIFACTS
+    
+    style Developer fill:#e1f5ff
+    style CI fill:#fff3e0
+    style Analysis fill:#f3e5f5
+    style Enforcement fill:#ffebee
+    style Visibility fill:#e8f5e9
+```
 ---
 
 ## Features
@@ -465,26 +643,6 @@ This coverage enables TerraSecure to perform multi-cloud security analysis acros
 
 ---
 
-### AI-Powered Finding Analysis
-
-Every detected issue includes four AI-generated sections:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  EXPLANATION     What is misconfigured and why it's risky   │
-│  BUSINESS IMPACT Financial, regulatory (GDPR/SOC2), and     │
-│                  reputational consequences                  │
-│  ATTACK SCENARIO How attackers exploit this — with real     │
-│                  breach examples (Capital One, etc.)        │
-│  DETAILED FIX    Step-by-step remediation with Terraform    │
-│                  code snippets                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**Graceful degradation:** When AWS Bedrock is unavailable, TerraSecure falls back to expert-crafted breach-informed templates — no silent failures, full offline support.
-
----
-
 ### Output Formats
 
 | Format | Use Case | Integration |
@@ -697,21 +855,27 @@ jobs:
 
 ```
 TerraSecure/
-├── src/                    # Core scanner engine
-│   └── cli.py              # CLI entry point
-├── models/                 # Pre-trained XGBoost model (177 KB)
-├── data/                   # Training data (265 samples, breach corpus)
-├── scripts/                # Model training and evaluation scripts
-│   └── build_production_model.py
-├── tests/                  # 27 pytest test cases
-├── examples/               # Sample vulnerable Terraform configs
-├── docs/                   # Architecture, ML model, AI enhancement docs
-├── assets/                 # Banner and visual assets
-├── .github/workflows/      # CI/CD pipeline definitions
-├── action.yml              # GitHub Marketplace action definition
-├── Dockerfile              # Multi-stage container build
-├── docker-compose.yml      # Local development setup
-└── requirements.txt        # Python dependencies
+├── src/
+│   ├── cli.py                 # Command-line interface
+│   ├── scanner/
+│   │   ├── parser.py          # Terraform parser
+│   │   └── analyzer.py        # Main orchestrator
+│   ├── rules/
+│   │   └── security_rules.py  # 50+ security patterns
+│   ├── ml/
+│   │   ├── ml_analyzer.py     # ML inference
+│   │   └── feature_extractor.py # Feature engineering
+│   ├── llm/
+│   │   └── bedrock_analyzer.py # AI enhancement
+│   └── formatters/
+│       └── sarif_formatter.py  # SARIF output
+├── models/
+│   └── terrasecure_production_v1.0.pkl # Pre-trained model
+├── scripts/
+│   └── build_production_model.py # Model training
+└── tests/
+    ├── unit/           # Unit tests
+    └── integration/    # Integration tests
 ```
 
 ---
