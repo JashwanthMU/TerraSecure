@@ -217,7 +217,7 @@ TerraSecure uses a **three-layer detection pipeline**:
 
 ## Features
 
-### Security Coverage — 50+ Patterns Across 5 Domains
+### Security Coverage For AWS (existing TerraSecure) — 50+ Patterns Across 5 Domains
 
 <details>
 <summary><b>🌐 Network Security (12 patterns)</b></summary>
@@ -298,6 +298,170 @@ TerraSecure uses a **three-layer detection pipeline**:
 - AWS Config rules not enabled
 
 </details>
+
+# Multi-Cloud Security Coverage planned
+
+## ☁️ Azure Security Coverage (50+ Patterns)
+
+### 🌐 Network Security (12 Patterns)
+
+- Network Security Groups (NSGs) open to `0.0.0.0/0`
+- RDP (3389) exposed publicly
+- SSH (22) exposed publicly
+- Unrestricted outbound NSG rules
+- Missing subnet segmentation
+- Virtual Network without Network Watcher enabled
+- Azure Firewall not configured
+- Public IP attached to critical VMs
+- Application Gateway without WAF
+- Load Balancer diagnostics disabled
+- ExpressRoute/VPN without monitoring
+- Azure Bastion not used for administrative access
+
+### 🗄️ Storage Security (15 Patterns)
+
+- Storage Account public access enabled
+- Blob containers publicly accessible
+- Storage encryption disabled
+- Soft Delete disabled
+- Versioning disabled
+- Secure transfer required disabled
+- Storage logging disabled
+- Customer-managed keys not used for sensitive data
+- Azure SQL encryption disabled
+- Managed Disk encryption disabled
+- Backup retention insufficient
+- Geo-redundant storage disabled
+- Key Vault purge protection disabled
+- Key Vault soft delete disabled
+- Snapshot sharing enabled
+
+### 🔑 Identity & Access Management (10 Patterns)
+
+- Owner role assigned excessively
+- Contributor role assigned broadly
+- Custom roles with wildcard permissions
+- Service principals with excessive privileges
+- MFA not enforced
+- Privileged Identity Management (PIM) disabled
+- Guest users with elevated access
+- Managed identities not used
+- Password policies weak
+- Cross-tenant trust misconfigured
+
+### 🔐 Secrets Management (8 Patterns)
+
+- Secrets hardcoded in ARM/Bicep/Terraform
+- Key Vault access policies overly permissive
+- Secrets stored in App Settings
+- Connection strings exposed
+- Service Principal credentials exposed
+- Certificates stored unencrypted
+- Key Vault firewall disabled
+- Long-lived secrets not rotated
+
+### 📊 Monitoring & Compliance (5 Patterns)
+
+- Azure Defender disabled
+- Azure Policy not enabled
+- Activity Logs not retained
+- Log Analytics Workspace not configured
+- Critical alerts missing
+
+---
+
+## ☁️ Google Cloud Security Coverage (50+ Patterns)
+
+### 🌐 Network Security (12 Patterns)
+
+- Firewall rules open to `0.0.0.0/0`
+- SSH access exposed publicly
+- RDP access exposed publicly
+- Default VPC in use
+- Missing VPC segmentation
+- Cloud NAT not configured properly
+- Cloud Armor not enabled
+- Public IPs on critical instances
+- Load Balancer logging disabled
+- VPC Flow Logs disabled
+- Private Google Access disabled
+- Database ports exposed publicly
+
+### 🗄️ Storage Security (15 Patterns)
+
+- Cloud Storage buckets public
+- Uniform bucket-level access disabled
+- Bucket versioning disabled
+- CMEK encryption not used
+- Storage logging disabled
+- Lifecycle rules missing
+- Public snapshots/images
+- Cloud SQL encryption disabled
+- Cloud SQL backups disabled
+- Cloud SQL public IP enabled
+- Snapshot retention insufficient
+- Multi-region replication disabled
+- Sensitive buckets without retention policies
+- Secret Manager secrets unencrypted
+- Filestore without backups
+
+### 🔑 Identity & Access Management (10 Patterns)
+
+- Primitive roles (Owner/Editor) assigned
+- Service accounts with Owner role
+- Overly permissive IAM bindings
+- Workload Identity not used
+- MFA not enforced
+- Service account keys not rotated
+- Public service account access
+- Excessive project-level permissions
+- Cross-project trust misconfigured
+- Default service accounts in production
+
+### 🔐 Secrets Management (8 Patterns)
+
+- Secrets hardcoded in Terraform
+- Secrets stored in environment variables
+- Service account keys committed to repositories
+- Secret Manager not used
+- Plaintext database credentials
+- Kubernetes Secrets not encrypted
+- Long-lived API keys
+- Secret rotation not configured
+
+### 📊 Monitoring & Compliance (5 Patterns)
+
+- Cloud Audit Logs disabled
+- Security Command Center disabled
+- Cloud Monitoring alerts missing
+- Log retention insufficient
+- Organization policies not enforced
+
+---
+
+## 📈 Coverage Summary
+
+| Cloud Provider | Network | Storage | IAM | Secrets | Monitoring | Total |
+|---------------|---------|---------|------|---------|-----------|-------|
+| AWS | 12 | 15 | 10 | 8 | 5 | 50 |
+| Azure | 12 | 15 | 10 | 8 | 5 | 50 |
+| Google Cloud | 12 | 15 | 10 | 8 | 5 | 50 |
+
+### Total Multi-Cloud Coverage
+
+- AWS: 50 Patterns
+- Azure: 50 Patterns
+- Google Cloud: 50 Patterns
+
+**Grand Total: 150+ Security Misconfiguration Detection Patterns**
+
+This coverage enables TerraSecure to perform multi-cloud security analysis across AWS, Azure, and Google Cloud environments while providing:
+
+- Unified risk scoring
+- AI-powered remediation recommendations
+- Compliance validation (CIS, NIST, ISO 27001)
+- Multi-cloud security posture assessment
+- Infrastructure-as-Code (IaC) security scanning
 
 ---
 
