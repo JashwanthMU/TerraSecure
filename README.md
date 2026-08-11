@@ -481,7 +481,8 @@ flowchart TB
 
 ## ☁️ Azure Security Coverage (50+ Patterns)
 
-### 🌐 Network Security (12 Patterns)
+<details>
+<summary><b>🌐 Network Security (12 patterns)</b></summary>
 
 - Network Security Groups (NSGs) open to `0.0.0.0/0`
 - RDP (3389) exposed publicly
@@ -496,7 +497,10 @@ flowchart TB
 - ExpressRoute/VPN without monitoring
 - Azure Bastion not used for administrative access
 
-### 🗄️ Storage Security (15 Patterns)
+</details>
+
+<details>
+<summary><b>🗄️ Storage Security (15 patterns)</b></summary>
 
 - Storage Account public access enabled
 - Blob containers publicly accessible
@@ -514,7 +518,10 @@ flowchart TB
 - Key Vault soft delete disabled
 - Snapshot sharing enabled
 
-### 🔑 Identity & Access Management (10 Patterns)
+</details>
+
+<details>
+<summary><b>🔑 Identity & Access Management (10 patterns)</b></summary>
 
 - Owner role assigned excessively
 - Contributor role assigned broadly
@@ -527,7 +534,10 @@ flowchart TB
 - Password policies weak
 - Cross-tenant trust misconfigured
 
-### 🔐 Secrets Management (8 Patterns)
+</details>
+
+<details>
+<summary><b>🔐 Secrets Management (8 patterns)</b></summary>
 
 - Secrets hardcoded in ARM/Bicep/Terraform
 - Key Vault access policies overly permissive
@@ -538,7 +548,10 @@ flowchart TB
 - Key Vault firewall disabled
 - Long-lived secrets not rotated
 
-### 📊 Monitoring & Compliance (5 Patterns)
+</details>
+
+<details>
+<summary><b>📊 Monitoring & Compliance (5 patterns)</b></summary>
 
 - Azure Defender disabled
 - Azure Policy not enabled
@@ -546,11 +559,14 @@ flowchart TB
 - Log Analytics Workspace not configured
 - Critical alerts missing
 
+</details>
+
 ---
 
 ## ☁️ Google Cloud Security Coverage (50+ Patterns)
 
-### 🌐 Network Security (12 Patterns)
+<details>
+<summary><b>🌐 Network Security (12 patterns)</b></summary>
 
 - Firewall rules open to `0.0.0.0/0`
 - SSH access exposed publicly
@@ -565,7 +581,10 @@ flowchart TB
 - Private Google Access disabled
 - Database ports exposed publicly
 
-### 🗄️ Storage Security (15 Patterns)
+</details>
+
+<details>
+<summary><b>🗄️ Storage Security (15 patterns)</b></summary>
 
 - Cloud Storage buckets public
 - Uniform bucket-level access disabled
@@ -583,7 +602,10 @@ flowchart TB
 - Secret Manager secrets unencrypted
 - Filestore without backups
 
-### 🔑 Identity & Access Management (10 Patterns)
+</details>
+
+<details>
+<summary><b>🔑 Identity & Access Management (10 patterns)</b></summary>
 
 - Primitive roles (Owner/Editor) assigned
 - Service accounts with Owner role
@@ -596,7 +618,10 @@ flowchart TB
 - Cross-project trust misconfigured
 - Default service accounts in production
 
-### 🔐 Secrets Management (8 Patterns)
+</details>
+
+<details>
+<summary><b>🔐 Secrets Management (8 patterns)</b></summary>
 
 - Secrets hardcoded in Terraform
 - Secrets stored in environment variables
@@ -607,13 +632,18 @@ flowchart TB
 - Long-lived API keys
 - Secret rotation not configured
 
-### 📊 Monitoring & Compliance (5 Patterns)
+</details>
+
+<details>
+<summary><b>📊 Monitoring & Compliance (5 patterns)</b></summary>
 
 - Cloud Audit Logs disabled
 - Security Command Center disabled
 - Cloud Monitoring alerts missing
 - Log retention insufficient
 - Organization policies not enforced
+
+</details>
 
 ---
 
