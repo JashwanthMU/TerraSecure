@@ -1,5 +1,5 @@
-name: 'TerraSecure Security Scanner'
-description: 'AI-Powered Terraform Security Scanner with ML (92% accuracy)'
+name: 'TerraSecure'
+description: 'Multi-cloud AI-powered Terraform security scanner for AWS, Azure, and GCP'
 author: 'JashwanthMU'
 
 branding:
@@ -8,52 +8,97 @@ branding:
 
 inputs:
   path:
-    description: 'Path to Terraform files'
+    description: 'Path to Terraform files or directory to scan'
     required: false
     default: '.'
-  
   format:
-    description: 'Output format (text, json, sarif)'
+    description: 'Output format: text, json, or sarif'
     required: false
     default: 'sarif'
-  
+  fail-on:
+    description: 'Severity level that causes the action to fail: critical, high, medium, or any'
+    required: false
+    default: 'critical'
+  cloud:
+    description: 'Comma-separated list of clouds to scan: aws,azure,gcp. Leave empty to scan all detected clouds.'
+    required: false
+    default: ''
   output:
-    description: 'Output file path'
+    description: 'Output file path for scan results'
     required: false
     default: 'terrasecure-results.sarif'
-  
-  fail-on:
-    description: 'Fail on severity (critical, high, medium, low)'
-    required: false
-    default: 'high'
+
+outputs:
+  sarif-file:
+    description: 'Path to the generated SARIF file'
+    value: ${{ steps.scan.outputs.sarif-file }}
+  issues-found:
+    description: 'Total number of issues found'
+    value: ${{ steps.scan.outputs.issues-found }}
+  critical-count:
+    description: 'Number of CRITICAL severity issues found'
+    value: ${{ steps.scan.outputs.critical-count }}
+  cloud-breakdown:
+    description: 'JSON object of issue counts per cloud, e.g. {"aws":3,"azure":1}'
+    value: ${{ steps.scan.outputs.cloud-breakdown }}
 
 runs:
   using: 'composite'
   steps:
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
-    - name: Install dependencies
+    - name: Build Docker image
+      shell: bash
+      run: docker build -t terrasecure-action:latest "${{ github.action_path }}"
+
+    - name: Run TerraSecure scan
+      id: scan
       shell: bash
       run: |
-        cd ${{ github.action_path }}
-        pip install -r requirements.txt
-    
-    - name: Build ML model if needed
-      shell: bash
-      run: |
-        cd ${{ github.action_path }}
-        if [ ! -f "models/terrasecure_production_v1.0.pkl" ]; then
-          python scripts/build_production_model.py
+        set +e
+
+        CLOUD_ARGS=()
+        if [ -n "${{ inputs.cloud }}" ]; then
+          CLOUD_ARGS=(--cloud "${{ inputs.cloud }}")
         fi
-    
-    - name: Run TerraSecure
-      shell: bash
-      run: |
-        cd ${{ github.action_path }}
-        python src/cli.py ${{ inputs.path }} \
-          --format ${{ inputs.format }} \
-          --output ${{ github.workspace }}/${{ inputs.output }} \
-          --fail-on ${{ inputs.fail-on }}
+
+        # Primary requested-format output (usually SARIF for the
+        # Security tab).
+        docker run --rm \
+          -v "${{ github.workspace }}:/workspace" \
+          -w /workspace \
+          terrasecure-action:latest \
+          "${{ inputs.path }}" \
+          --format "${{ inputs.format }}" \
+          --fail-on "${{ inputs.fail-on }}" \
+          --output "${{ inputs.output }}" \
+          "${CLOUD_ARGS[@]}"
+        SCAN_EXIT=$?
+
+        # Also generate a JSON report internally so we can populate
+        # the action's outputs (issue counts, cloud breakdown)
+        # regardless of what --format the user asked for.
+        docker run --rm \
+          -v "${{ github.workspace }}:/workspace" \
+          -w /workspace \
+          terrasecure-action:latest \
+          "${{ inputs.path }}" \
+          --format json \
+          --fail-on any \
+          --output terrasecure-summary.json \
+          "${CLOUD_ARGS[@]}" > /dev/null 2>&1
+
+        if [ -f "terrasecure-summary.json" ]; then
+          ISSUES=$(python3 -c "import json; d=json.load(open('terrasecure-summary.json')); print(len(d.get('issues', [])))")
+          CRITICAL=$(python3 -c "import json; d=json.load(open('terrasecure-summary.json')); print(d.get('stats', {}).get('CRITICAL', 0))")
+          BREAKDOWN=$(python3 -c "import json; d=json.load(open('terrasecure-summary.json')); print(json.dumps(d.get('cloud_breakdown', {})))")
+        else
+          ISSUES=0
+          CRITICAL=0
+          BREAKDOWN='{}'
+        fi
+
+        echo "sarif-file=${{ inputs.output }}" >> "$GITHUB_OUTPUT"
+        echo "issues-found=$ISSUES" >> "$GITHUB_OUTPUT"
+        echo "critical-count=$CRITICAL" >> "$GITHUB_OUTPUT"
+        echo "cloud-breakdown=$BREAKDOWN" >> "$GITHUB_OUTPUT"
+
+        exit $SCAN_EXIT

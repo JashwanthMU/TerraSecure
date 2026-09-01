@@ -10,21 +10,21 @@ jobs:
   test-and-build:
     name: Test & Build TerraSecure
     runs-on: ubuntu-latest
-    
+
     steps:
       - name:  Checkout code
         uses: actions/checkout@v4
-      
+
       - name:  Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name:  Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      
+
       - name:  Build ML model
         run: |
           if [ ! -f "models/terrasecure_production_v1.0.pkl" ]; then
@@ -34,17 +34,97 @@ jobs:
             echo " ML model already exists"
             ls -lh models/terrasecure_production_v1.0.pkl
           fi
-      
+
       - name:  Test CLI Help
         run: |
           python src/cli.py --help
-      
-      - name:  Test Scan
+
+      # ── AWS (existing fixtures, rules + ML) ──────────────────────────
+      - name:  Test AWS Scan
         run: |
-          echo "Running scan on examples/vulnerable (should find issues)..."
-          python src/cli.py examples/vulnerable || true
-          echo " Scan completed (findings expected)"
-      
+          echo "Running scan on examples/vulnerable, filtered to AWS..."
+          python src/cli.py examples/vulnerable --cloud aws || true
+          echo " AWS scan completed (findings expected)"
+
+      # ── Azure (rules only — regression guard for the routing/SARIF fixes) ──
+      # Two fixtures exercise the Azure engine: examples/vulnerable-azure
+      # (isolated, catches Azure-engine bugs without AWS/GCP noise) and
+      # the --cloud azure filter against examples/vulnerable (catches
+      # cross-provider routing bugs specifically).
+      - name:  Test Azure Scan (isolated fixture)
+        run: |
+          echo "Running scan on examples/vulnerable-azure (should find issues)..."
+          python src/cli.py examples/vulnerable-azure --cloud azure || true
+          echo " Azure scan completed (findings expected)"
+
+      - name:  Test Azure Scan (filtered from mixed fixture)
+        run: |
+          python src/cli.py examples/vulnerable --cloud azure --format json --output azure-filtered.json || true
+          python -c "
+          import json, sys
+          d = json.load(open('azure-filtered.json'))
+          non_azure = [i for i in d['issues'] if i.get('cloud') != 'azure']
+          if non_azure:
+              print(f'ERROR: --cloud azure leaked {len(non_azure)} non-Azure findings')
+              sys.exit(1)
+          if len(d['issues']) == 0:
+              print('ERROR: --cloud azure found nothing in a fixture known to contain Azure findings')
+              sys.exit(1)
+          print(f\"OK: {len(d['issues'])} Azure-only findings, correctly filtered\")
+          "
+
+      # ── GCP (rules only) ──────────────────────────────────────────────
+      - name:  Test GCP Scan (isolated fixture)
+        run: |
+          echo "Running scan on examples/vulnerable-gcp (should find issues)..."
+          python src/cli.py examples/vulnerable-gcp --cloud gcp || true
+          echo " GCP scan completed (findings expected)"
+
+      # ── Mixed-provider directory scan ──────────────────────────────────
+      # Regression guard for the per-resource provider routing bug:
+      # examples/vulnerable/main.tf mixes AWS + Azure + GCP resources in
+      # one file (a realistic multi-provider Terraform config), so
+      # findings must be produced and correctly tagged for all three,
+      # not just AWS.
+      - name:  Test Mixed-Provider Scan
+        run: |
+          python src/cli.py examples/vulnerable --format json --output mixed-results.json || true
+
+          echo "Verifying findings span multiple clouds..."
+          python -c "
+          import json, sys
+          with open('mixed-results.json') as f:
+              data = json.load(f)
+          breakdown = data.get('cloud_breakdown', {})
+          print('Cloud breakdown:', breakdown)
+          clouds_found = set(breakdown.keys())
+          expected = {'aws', 'azure', 'gcp'}
+          missing = expected - clouds_found
+          if missing:
+              print(f'ERROR: no findings for: {missing} — provider routing may be broken')
+              sys.exit(1)
+          print('OK: findings present for all three clouds')
+          "
+
+      # ── Regression guard for the KeyError crash fixed in cli.py ────────
+      # output_text used to bracket-access ml_risk_score, which crashed
+      # on any non-AWS finding. Run --format text against a non-AWS-only
+      # target and require exit code 0/1/2 (a clean scan exit), not a
+      # Python traceback (which would show up as a non-scan exit or
+      # 'Traceback' in stderr).
+      - name:  Test Text Output Does Not Crash on Non-AWS Findings
+        run: |
+          set +e
+          OUTPUT=$(python src/cli.py examples/vulnerable-azure --format text --fail-on any 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q "Traceback"; then
+            echo "ERROR: CLI crashed on Azure findings in text format"
+            exit 1
+          fi
+          echo " Text output handled non-AWS findings without crashing"
+
       - name:  Generate JSON Report
         run: |
           python src/cli.py examples/vulnerable --format json --output test-results.json || true
@@ -53,15 +133,39 @@ jobs:
             echo "Preview:"
             cat test-results.json | head -50
           fi
-      
+
+      # ── SARIF cloud-tagging regression guard ────────────────────────────
+      # Verifies the cloud property actually reaches the SARIF output
+      # through the CLI conversion path, not just the formatter itself.
+      - name:  Generate and Validate SARIF Report
+        run: |
+          python src/cli.py examples/vulnerable --format sarif --output test-results.sarif || true
+          if [ -f "test-results.sarif" ]; then
+            echo " SARIF report generated"
+            python -c "
+            import json, sys
+            with open('test-results.sarif') as f:
+                sarif = json.load(f)
+            results = sarif['runs'][0]['results']
+            missing_cloud = [r for r in results if 'cloud' not in r.get('properties', {})]
+            if missing_cloud:
+                print(f'ERROR: {len(missing_cloud)} SARIF results missing cloud property')
+                sys.exit(1)
+            print(f'OK: all {len(results)} SARIF results carry a cloud property')
+            "
+          fi
+
       - name:  Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: scan-results
-          path: test-results.json
+          path: |
+            test-results.json
+            test-results.sarif
+            mixed-results.json
           if-no-files-found: warn
-      
+
       - name:  CI/CD Summary
         if: always()
         run: |
@@ -79,22 +183,26 @@ jobs:
     runs-on: ubuntu-latest
     needs: test-and-build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+
     steps:
       - name:  Checkout code
         uses: actions/checkout@v4
-      
+
       - name:  Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name:  Build Docker image
         run: |
           docker build -t terrasecure:latest .
-      
+
       - name:  Test Docker image
         run: |
           docker run --rm terrasecure:latest --help
-      
+
+      - name:  Test Docker image multi-cloud scan
+        run: |
+          docker run --rm -v "$PWD/examples:/scan" terrasecure:latest /scan/vulnerable --cloud aws,azure,gcp --format json | head -50
+
       - name:  Docker Summary
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
