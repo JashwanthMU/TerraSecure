@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "build_date": "2026-03-21T13:11:48.912980",
+  "build_date": "2026-09-01T13:03:45.362812",
   "training_samples": 265,
   "features": [
     "open_cidr_0_0_0_0",
@@ -64,96 +64,96 @@
     "colsample_bytree": 0.8
   },
   "performance": {
-    "cv_mean_accuracy": 0.6339622641509434,
-    "cv_std_accuracy": 0.05918636657116271,
-    "test_accuracy": 0.8490566037735849,
-    "test_precision": 0.9473684210526315,
-    "test_recall": 0.72,
-    "test_f1": 0.8181818181818181,
-    "false_positive_rate": 0.03571428571428571,
-    "false_negative_rate": 0.28
+    "cv_mean_accuracy": 0.6226415094339621,
+    "cv_std_accuracy": 0.06750393894338985,
+    "test_accuracy": 0.9811320754716981,
+    "test_precision": 1.0,
+    "test_recall": 0.96,
+    "test_f1": 0.9795918367346939,
+    "false_positive_rate": 0.0,
+    "false_negative_rate": 0.04
   },
-  "quality_gates_passed": false,
+  "quality_gates_passed": true,
   "top_features": [
     {
-      "feature": "s3_block_public_access_disabled",
-      "importance": 0.06770111620426178
-    },
-    {
-      "feature": "mfa_not_enabled",
-      "importance": 0.06593645364046097
-    },
-    {
-      "feature": "open_database_port_5432",
-      "importance": 0.06402935832738876
+      "feature": "default_sg_in_use",
+      "importance": 0.10154491662979126
     },
     {
       "feature": "s3_encryption_disabled",
-      "importance": 0.0637148842215538
-    },
-    {
-      "feature": "secrets_in_environment_vars",
-      "importance": 0.061204418540000916
-    },
-    {
-      "feature": "s3_public_acl",
-      "importance": 0.056874100118875504
-    },
-    {
-      "feature": "s3_versioning_disabled",
-      "importance": 0.05658234655857086
-    },
-    {
-      "feature": "ecr_image_scan_disabled",
-      "importance": 0.05553901195526123
-    },
-    {
-      "feature": "s3_lifecycle_policy_missing",
-      "importance": 0.04677736386656761
-    },
-    {
-      "feature": "open_ssh_port_22",
-      "importance": 0.04216485843062401
+      "importance": 0.10132720321416855
     },
     {
       "feature": "lambda_env_vars_unencrypted",
-      "importance": 0.04169099032878876
+      "importance": 0.0755753219127655
+    },
+    {
+      "feature": "ecs_task_privilege_escalation",
+      "importance": 0.060712821781635284
+    },
+    {
+      "feature": "api_gateway_no_waf",
+      "importance": 0.060065798461437225
+    },
+    {
+      "feature": "s3_public_acl",
+      "importance": 0.049388088285923004
+    },
+    {
+      "feature": "s3_block_public_access_disabled",
+      "importance": 0.04877634346485138
     },
     {
       "feature": "backup_vault_unencrypted",
-      "importance": 0.04094713181257248
+      "importance": 0.04782823473215103
     },
     {
-      "feature": "access_logging_disabled",
-      "importance": 0.040167100727558136
+      "feature": "mfa_not_enabled",
+      "importance": 0.0471222847700119
     },
     {
-      "feature": "default_sg_in_use",
-      "importance": 0.03690481558442116
+      "feature": "rds_publicly_accessible",
+      "importance": 0.03974780812859535
     },
     {
-      "feature": "cloudtrail_not_enabled",
-      "importance": 0.034695662558078766
+      "feature": "open_ssh_port_22",
+      "importance": 0.036416493356227875
+    },
+    {
+      "feature": "alarm_missing_for_changes",
+      "importance": 0.03638036921620369
+    },
+    {
+      "feature": "open_database_port_5432",
+      "importance": 0.03609767556190491
+    },
+    {
+      "feature": "s3_versioning_disabled",
+      "importance": 0.0354439839720726
+    },
+    {
+      "feature": "ecr_image_scan_disabled",
+      "importance": 0.03302896022796631
+    },
+    {
+      "feature": "secrets_in_environment_vars",
+      "importance": 0.024917442351579666
     },
     {
       "feature": "vpc_flow_logs_disabled",
-      "importance": 0.03453592583537102
+      "importance": 0.02443617396056652
     },
     {
-      "feature": "iam_wildcard_action",
-      "importance": 0.028096739202737808
+      "feature": "s3_lifecycle_policy_missing",
+      "importance": 0.024299250915646553
     },
     {
-      "feature": "iam_wildcard_resource",
-      "importance": 0.02792280726134777
+      "feature": "open_database_port_3306",
+      "importance": 0.02404932491481304
     },
     {
-      "feature": "hardcoded_aws_credentials",
-      "importance": 0.024402394890785217
-    },
-    {
-      "feature": "s3_mfa_delete_disabled",
-      "importance": 0.024298422038555145
+      "feature": "kms_key_rotation_disabled",
+      "importance": 0.02146250382065773
     }
   ]
 }
