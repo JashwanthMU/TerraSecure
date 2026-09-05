@@ -1,4 +1,4 @@
-name: 'TerraSecure'
+name: 'TerraSecure Multi-Cloud IaC Scanner'
 description: 'Multi-cloud AI-powered Terraform security scanner for AWS, Azure, and GCP'
 author: 'JashwanthMU'
 
