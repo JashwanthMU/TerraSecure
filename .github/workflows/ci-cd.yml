@@ -142,20 +142,20 @@ jobs:
       - name:  Generate and Validate SARIF Report
         run: |
           python src/cli.py examples --format sarif --output test-results.sarif || true
-          if [ -f "test-results.sarif" ]; then
-            echo " SARIF report generated"
-            python -c "
-            import json, sys
-            with open('test-results.sarif') as f:
-                sarif = json.load(f)
-            results = sarif['runs'][0]['results']
-            missing_cloud = [r for r in results if 'cloud' not in r.get('properties', {})]
-            if missing_cloud:
-                print(f'ERROR: {len(missing_cloud)} SARIF results missing cloud property')
-                sys.exit(1)
-            print(f'OK: all {len(results)} SARIF results carry a cloud property')
-            "
-          fi
+          python -c "
+          import json, os, sys
+          if not os.path.exists('test-results.sarif'):
+              print('ERROR: test-results.sarif was not generated')
+              sys.exit(1)
+          with open('test-results.sarif') as f:
+              sarif = json.load(f)
+          results = sarif['runs'][0]['results']
+          missing_cloud = [r for r in results if 'cloud' not in r.get('properties', {})]
+          if missing_cloud:
+              print(f'ERROR: {len(missing_cloud)} SARIF results missing cloud property')
+              sys.exit(1)
+          print(f'OK: all {len(results)} SARIF results carry a cloud property')
+          "
 
       - name:  Upload test results
         uses: actions/upload-artifact@v4
