@@ -59,7 +59,7 @@ jobs:
 
       - name:  Test Azure Scan (filtered from mixed fixture)
         run: |
-          python src/cli.py examples/vulnerable --cloud azure --format json --output azure-filtered.json || true
+          python src/cli.py examples --cloud azure --format json --output azure-filtered.json || true
           python -c "
           import json, sys
           d = json.load(open('azure-filtered.json'))
@@ -82,13 +82,15 @@ jobs:
 
       # ── Mixed-provider directory scan ──────────────────────────────────
       # Regression guard for the per-resource provider routing bug:
-      # examples/vulnerable/main.tf mixes AWS + Azure + GCP resources in
-      # one file (a realistic multi-provider Terraform config), so
-      # findings must be produced and correctly tagged for all three,
-      # not just AWS.
+      # examples/ contains AWS (vulnerable/), Azure (vulnerable-azure/), and
+      # GCP (vulnerable-gcp/) fixtures side by side. Scanning the parent
+      # directory recursively picks up all three regardless of what any
+      # single file contains — this is the regression guard for the
+      # per-resource provider routing bug, and doesn't depend on any one
+      # .tf file being manually kept in sync with multi-cloud content.
       - name:  Test Mixed-Provider Scan
         run: |
-          python src/cli.py examples/vulnerable --format json --output mixed-results.json || true
+          python src/cli.py examples --format json --output mixed-results.json || true
 
           echo "Verifying findings span multiple clouds..."
           python -c "
@@ -139,7 +141,7 @@ jobs:
       # through the CLI conversion path, not just the formatter itself.
       - name:  Generate and Validate SARIF Report
         run: |
-          python src/cli.py examples/vulnerable --format sarif --output test-results.sarif || true
+          python src/cli.py examples --format sarif --output test-results.sarif || true
           if [ -f "test-results.sarif" ]; then
             echo " SARIF report generated"
             python -c "
@@ -201,7 +203,7 @@ jobs:
 
       - name:  Test Docker image multi-cloud scan
         run: |
-          docker run --rm -v "$PWD/examples:/scan" terrasecure:latest /scan/vulnerable --cloud aws,azure,gcp --format json | head -50
+          docker run --rm -v "$PWD/examples:/scan" terrasecure:latest /scan --cloud aws,azure,gcp --format json | head -50
 
       - name:  Docker Summary
         run: |
