@@ -218,3 +218,9 @@ credentials
 # Temporary scan outputs
 scan_results/
 reports/
+
+test-results.json
+test-results.sarif
+mixed-results.json
+azure-filtered.json
+*.sarif

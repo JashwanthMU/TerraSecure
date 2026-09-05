@@ -15,10 +15,10 @@
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 
-[![ML Accuracy](https://img.shields.io/badge/ML_Accuracy-92.45%25-success?style=flat-square&logo=tensorflow)](https://github.com/JashwanthMU/TerraSecure)
-[![False Positives](https://img.shields.io/badge/False_Positives-10.71%25-orange?style=flat-square)](https://github.com/JashwanthMU/TerraSecure)
-[![Tests](https://img.shields.io/badge/Tests-27_Passing-brightgreen?style=flat-square&logo=pytest)](https://github.com/JashwanthMU/TerraSecure)
-[![Model Size](https://img.shields.io/badge/Model_Size-177KB-blueviolet?style=flat-square)](https://github.com/JashwanthMU/TerraSecure/tree/main/models)
+[![ML Test Accuracy](https://img.shields.io/badge/ML_Test_Accuracy-98.11%25-success?style=flat-square&logo=tensorflow)](#-benchmarks)
+[![5--Fold CV Mean](https://img.shields.io/badge/5--Fold_CV_Mean-62.26%25-yellow?style=flat-square)](#-benchmarks)
+[![Tests](https://img.shields.io/badge/Tests-103_Passing-brightgreen?style=flat-square&logo=pytest)](https://github.com/JashwanthMU/TerraSecure)
+[![Model Size](https://img.shields.io/badge/Model_Size-195KB-blueviolet?style=flat-square)](https://github.com/JashwanthMU/TerraSecure/tree/main/models)
 
 <br/>
 
@@ -36,23 +36,23 @@
 
 Traditional IaC scanners like Checkov and Trivy are rule-based engines that generate hundreds of alerts — with 12–15% being false positives. Security teams burn hours triaging noise while real vulnerabilities slip through.
 
-**TerraSecure takes a different approach:** a pre-trained XGBoost ML model, trained on real-world breach data (Capital One, Uber, Tesla), combined with AWS Bedrock AI analysis — not just flags, but context, business impact, and remediation code.
+**TerraSecure takes a different approach:** a pre-trained XGBoost ML model for AWS resources, trained on real-world breach data (Capital One, Uber, Tesla), a hardened multi-cloud rule engine covering AWS, Azure, and GCP, and AWS Bedrock AI analysis — not just flags, but context, business impact, and remediation code.
 
 ---
 
 ## What is TerraSecure?
 
-TerraSecure is an **intelligent, shift-left security scanner** for Terraform and HCL Infrastructure as Code. It integrates directly into developer workflows — as a GitHub Action, Docker container, or CLI tool — and surfaces security issues with the context a developer actually needs to fix them.
+TerraSecure is an **intelligent, shift-left security scanner** for Terraform and HCL Infrastructure as Code across **AWS, Azure, and Google Cloud**. It integrates directly into developer workflows — as a GitHub Action, Docker container, or CLI tool — and surfaces security issues with the context a developer actually needs to fix them.
 
 ```
 Traditional Scanner:"Security group allows SSH from 0.0.0.0/0"
-TerraSecure:         "92% confidence · CRITICAL · Capital One-style
+TerraSecure:         "95% risk score · CRITICAL · Capital One-style
                        attack vector · GDPR exposure · 3-step fix"
 ```
 
 **Three layers of intelligence:**
-- **Rule Engine** — 50+ hardened security patterns across AWS resources
-- **ML Model** — XGBoost classifier with 50 engineered features, 92.45% accuracy
+- **Rule Engine** — 122 hardened security patterns across AWS (50), Azure (50), and GCP (22, v1)
+- **ML Model** — XGBoost classifier with 50 engineered features, trained on AWS breach patterns (AWS resources only — see [Benchmarks](#-benchmarks) for accuracy detail)
 - **AI Analysis** — AWS Bedrock (Claude 3 Haiku) explains impact, attack paths, and fixes
 
 ---
@@ -61,25 +61,28 @@ TerraSecure:         "92% confidence · CRITICAL · Capital One-style
 
 | | Checkov | Trivy | **TerraSecure** |
 |---|---|---|---|
-| Detection Method | Rules only | Rules only | **ML + Rules + AI** |
-| Accuracy | ~85% | ~88% | **92.45%** |
-| False Positive Rate | ~15% | ~12% | **10.71%** |
+| Detection Method | Rules only | Rules only | **ML (AWS) + Rules (multi-cloud) + AI** |
+| Cloud Coverage | Multi-cloud | Multi-cloud | **AWS, Azure, GCP*** |
+| Test-Set Accuracy (AWS ML) | ~85% | ~88% | **98%†** |
 | Business Impact Context | ✗ | ✗ | **✓ AI-generated** |
 | Real Breach Examples | ✗ | ✗ | **✓ Capital One, Uber, Tesla** |
 | Attack Scenario | ✗ | ✗ | **✓ Step-by-step** |
-| ML Risk Score | ✗ | ✗ | **✓ 50-feature scoring** |
+| ML Risk Score | ✗ | ✗ | **✓ AWS resources** |
 | Code Fix Examples | Generic | Generic | **✓ Resource-specific** |
 | SARIF / GitHub Security | ✓ | ✓ | **✓** |
 | Offline Mode | ✓ | ✓ | **✓** |
 | GitHub Marketplace | ✓ | ✓ | **✓** |
 
-> **Best practice:** Use TerraSecure **alongside** Checkov/Trivy for complementary coverage. TerraSecure's ML layer catches contextual risk that rule-based tools miss; established scanners provide breadth.
+<sub>\* GCP rule coverage is v1 (22 patterns) — AWS and Azure are at full parity (50 patterns each). See [Coverage Summary](#-coverage-summary).</sub>
+<sub>† Measured on a 53-sample held-out test set. 5-fold cross-validation mean was 62.26% (range 52.8%–73.6%) on the same 265-sample training corpus — see [Benchmarks](#-benchmarks) for the full picture rather than the single headline number.</sub>
+
+> **Best practice:** Use TerraSecure **alongside** Checkov/Trivy for complementary coverage. TerraSecure's ML layer catches contextual risk that rule-based tools miss on AWS; established scanners provide broader multi-cloud rule breadth today, especially for GCP.
 
 ---
 
 ## ⚡ Quick Start
 
-### GitHub Actions 
+### GitHub Actions
 
 Add to `.github/workflows/security.yml`:
 
@@ -95,22 +98,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: JashwanthMU/TerraSecure@v2.0.0
+
+      - name: Run TerraSecure
+        id: terrasecure
+        uses: JashwanthMU/TerraSecure@v2.1.0
         with:
           path: 'infrastructure'
           format: 'sarif'
           fail-on: 'high'
-          upload-sarif: 'true'
+          cloud: ''   # optional: 'aws', 'azure', 'gcp', or comma-separated — default scans all detected clouds
+
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.terrasecure.outputs.sarif-file }}
 ```
 
-Results surface automatically in the **GitHub Security tab** as code scanning alerts.
+Results surface automatically in the **GitHub Security tab** as code scanning alerts, tagged by cloud provider.
 
 ---
 
 ### Docker
 
 ```bash
-# Scan current directory
+# Scan current directory (all detected clouds)
 docker run --rm -v $(pwd):/scan \
   ghcr.io/jashwanthmu/terrasecure:latest /scan
 
@@ -120,6 +132,11 @@ docker run --rm \
   -v $(pwd)/reports:/output \
   ghcr.io/jashwanthmu/terrasecure:latest \
   /scan --format sarif --output /output/results.sarif
+
+# Scan only Azure resources in a mixed-cloud repo
+docker run --rm -v $(pwd):/scan \
+  ghcr.io/jashwanthmu/terrasecure:latest \
+  /scan --cloud azure
 
 # Block pipeline on critical findings
 docker run --rm -v $(pwd):/scan \
@@ -136,8 +153,11 @@ git clone https://github.com/JashwanthMU/TerraSecure.git
 cd TerraSecure
 pip install -r requirements.txt
 
-# Scan a directory
+# Scan a directory (all detected clouds)
 python src/cli.py examples/vulnerable/
+
+# Filter to specific clouds
+python src/cli.py infra/ --cloud aws,azure
 
 # Output formats
 python src/cli.py infra/ --format json --output report.json
@@ -151,7 +171,7 @@ python src/cli.py infra/ --fail-on critical
 
 ## Architecture
 
-TerraSecure uses a **three-layer detection pipeline**:
+TerraSecure uses a **three-layer detection pipeline** with per-resource cloud-provider routing:
 
 ```mermaid
 flowchart TB
@@ -164,12 +184,14 @@ flowchart TB
     subgraph Parser["  Parser Layer"]
         HP[HCL Parser]
         RE[Resource Extractor]
+        PD[Provider Detector<br/>aws_ / azurerm_ / google_]
         HP --> RE
+        RE --> PD
     end
 
     subgraph Detection["  Detection Engine"]
-        RULES[Rule Engine<br/>50+ Security Patterns]
-        ML[ML Model<br/>XGBoost 92% Accuracy]
+        RULES[Rule Engine<br/>AWS 50 · Azure 50 · GCP 22]
+        ML[ML Model<br/>AWS only · XGBoost]
         FEAT[Feature Extractor<br/>50 Security Features]
         
         RULES --> |Violations|FINDINGS
@@ -191,7 +213,7 @@ flowchart TB
     subgraph Output["  Output Formats"]
         TEXT[Text Output<br/>Human-Readable]
         JSON[JSON Output<br/>Machine-Readable]
-        SARIF[SARIF 2.1.0<br/>GitHub Security]
+        SARIF[SARIF 2.1.0<br/>GitHub Security, cloud-tagged]
     end
 
     subgraph Integration["  Integration Points"]
@@ -205,8 +227,8 @@ flowchart TB
     HCL --> HP
     MOD --> HP
     
-    RE --> RULES
-    RE --> FEAT
+    PD --> RULES
+    PD --> FEAT
     
     FINDINGS[  Security Findings] --> AI
     AI --> ENHANCE[Enhanced Findings<br/>with AI Context]
@@ -228,12 +250,13 @@ flowchart TB
     style Integration fill:#fce4ec
 ```
 
+Every parsed resource is routed to its cloud provider's rule engine by Terraform resource-type prefix before any checks run — an `azurerm_storage_account` and an `aws_s3_bucket` in the same file are evaluated independently, by the correct rule set, and tagged with their cloud in every output format.
 
 ---
 
 ### ML Pipeline
 
-**Training Data: Real-World Breach Corpus**
+**Training Data: Real-World Breach Corpus (AWS-focused)**
 
 | Incident | Year | Vector | Outcome |
 |---|---|---|---|
@@ -250,17 +273,17 @@ flowchart LR
         BREACH[Real Breaches<br/>Capital One, Uber, Tesla]
         FEAT_ENG[Feature Engineering<br/>50 Features]
         XGBOOST[XGBoost Model<br/>5-Fold CV]
-        EVAL[Evaluation<br/>92.45% Accuracy]
+        EVAL[Evaluation<br/>98% Test Set / 62% CV Mean]
         
         DATA --> FEAT_ENG
         BREACH --> DATA
         FEAT_ENG --> XGBOOST
         XGBOOST --> EVAL
-        EVAL --> |Model Export|MODEL_FILE[terrasecure_v1.0.pkl<br/>177 KB]
+        EVAL --> |Model Export|MODEL_FILE[terrasecure_v1.0.pkl<br/>195 KB]
     end
 
-    subgraph Inference["  ML Inference"]
-        RESOURCE[Terraform Resource]
+    subgraph Inference["  ML Inference — AWS resources only"]
+        RESOURCE[AWS Terraform Resource]
         EXTRACT[Extract 50 Features]
         PREDICT[Predict Risk]
         SCORE[Risk Score<br/>0.0 - 1.0]
@@ -278,6 +301,8 @@ flowchart LR
 ```
 
 **Feature categories:** encryption state, network exposure, IAM permissiveness, logging configuration, naming patterns (data sensitivity signals), cross-service dependency risks.
+
+**A note on the accuracy numbers:** the model scores 98.11% on a 53-sample held-out test set, but 5-fold cross-validation on the full 265-sample training corpus shows a mean of 62.26% (range 52.8%–73.6%). With a dataset this size, a single test-set score can vary significantly depending on which rows land in the split — the cross-validation range is the more honest signal of how the model generalizes. We're treating this as an open item: the training corpus needs to grow before the headline test-set number should be read as a stable production accuracy figure. Azure and GCP findings are rule-based only today and carry no ML score — see [Coverage Summary](#-coverage-summary).
 
 ---
 
@@ -300,18 +325,18 @@ Every detected issue includes four AI-generated sections:
 sequenceDiagram
     participant R as Resource
     participant D as Detection Engine
-    participant M as ML Model
+    participant M as ML Model (AWS only)
     participant A as AI Analyzer
     participant C as Cache
     participant O as Output
 
     R->>D: Scan Resource
-    D->>D: Apply Rules
-    D->>M: Extract Features
+    D->>D: Detect Provider + Apply Rules
+    D->>M: Extract Features (if AWS)
     M->>M: Predict Risk
     M-->>D: Risk Score (0.95)
     
-    D->>A: Finding + Risk Score
+    D->>A: Finding + Risk Score (or N/A for non-AWS)
     A->>C: Check Cache
     
     alt Cache Hit
@@ -323,7 +348,7 @@ sequenceDiagram
     end
     
     A-->>O: Enhanced Finding
-    O->>O: Format (Text/JSON/SARIF)
+    O->>O: Format (Text/JSON/SARIF), tag cloud
     O-->>R: Results with AI Context
 ```
 
@@ -350,7 +375,7 @@ flowchart TB
     end
 
     subgraph Analysis["  Analysis & Results"]
-        ML_CHECK[ML Risk Scoring]
+        ML_CHECK[ML Risk Scoring — AWS resources]
         AI_EXPLAIN[AI Analysis]
         REPORT[Generate Report]
     end
@@ -395,7 +420,7 @@ flowchart TB
 
 ## Features
 
-### Security Coverage For AWS (existing TerraSecure) — 50+ Patterns Across 5 Domains
+### AWS Security Coverage — 50 Patterns Across 5 Domains
 
 <details>
 <summary><b>🌐 Network Security (12 patterns)</b></summary>
@@ -477,171 +502,147 @@ flowchart TB
 
 </details>
 
-# Multi-Cloud Security Coverage planned
+---
 
-## ☁️ Azure Security Coverage (50+ Patterns)
+# Multi-Cloud Security Coverage
+
+## ☁️ Azure Security Coverage (50 Patterns)
 
 <details>
 <summary><b>🌐 Network Security (12 patterns)</b></summary>
 
-- Network Security Groups (NSGs) open to `0.0.0.0/0`
-- RDP (3389) exposed publicly
-- SSH (22) exposed publicly
-- Unrestricted outbound NSG rules
-- Missing subnet segmentation
-- Virtual Network without Network Watcher enabled
-- Azure Firewall not configured
-- Public IP attached to critical VMs
-- Application Gateway without WAF
-- Load Balancer diagnostics disabled
-- ExpressRoute/VPN without monitoring
-- Azure Bastion not used for administrative access
+- NSG rule allows RDP (3389) from the internet
+- NSG rule allows SSH (22) from the internet
+- NSG rule allows all inbound traffic from the internet
+- NSG rule allows unrestricted outbound traffic
+- VM has a public IP assigned directly
+- Application Gateway without WAF enabled
+- Load Balancer without diagnostic settings
+- AKS cluster with no network policy configured
+- Azure SQL firewall allows "all Azure services"
+- Azure SQL firewall allows all public IPs
+- Function App does not enforce HTTPS
+- App Service does not enforce HTTPS
 
 </details>
 
 <details>
 <summary><b>🗄️ Storage Security (15 patterns)</b></summary>
 
-- Storage Account public access enabled
-- Blob containers publicly accessible
-- Storage encryption disabled
-- Soft Delete disabled
-- Versioning disabled
-- Secure transfer required disabled
-- Storage logging disabled
-- Customer-managed keys not used for sensitive data
-- Azure SQL encryption disabled
-- Managed Disk encryption disabled
-- Backup retention insufficient
-- Geo-redundant storage disabled
-- Key Vault purge protection disabled
+- Storage Account allows public blob access
+- Storage Container access type is public
+- Storage Account allows HTTP (not HTTPS-only)
+- Storage Account uses weak TLS version (<1.2)
+- Blob soft delete disabled or retention <7 days
+- Blob versioning disabled
+- Storage Account has no logging configured
 - Key Vault soft delete disabled
-- Snapshot sharing enabled
+- Key Vault purge protection disabled
+- Key Vault network ACL defaults to "Allow"
+- SQL Database has TDE explicitly disabled
+- SQL Server has no auditing policy
+- SQL Server audit retention <90 days
+- Managed Disk uses platform-managed key (no CMK)
+- VM backup retention <7 days
 
 </details>
 
 <details>
 <summary><b>🔑 Identity & Access Management (10 patterns)</b></summary>
 
-- Owner role assigned excessively
-- Contributor role assigned broadly
-- Custom roles with wildcard permissions
-- Service principals with excessive privileges
-- MFA not enforced
-- Privileged Identity Management (PIM) disabled
-- Guest users with elevated access
-- Managed identities not used
-- Password policies weak
-- Cross-tenant trust misconfigured
+- Owner role assigned at subscription scope
+- Contributor role assigned at subscription scope
+- Custom role definition contains wildcard action
+- Any role assigned at subscription scope (broad blast radius)
+- AKS cluster has Kubernetes RBAC disabled
+- AKS cluster not integrated with Azure AD
+- App Service has no managed identity
+- Function App has no managed identity
+- SQL Server has no Azure AD administrator
+- Linux VM allows password authentication
 
 </details>
 
 <details>
 <summary><b>🔐 Secrets Management (8 patterns)</b></summary>
 
-- Secrets hardcoded in ARM/Bicep/Terraform
-- Key Vault access policies overly permissive
-- Secrets stored in App Settings
-- Connection strings exposed
-- Service Principal credentials exposed
-- Certificates stored unencrypted
-- Key Vault firewall disabled
-- Long-lived secrets not rotated
+- Key Vault access policy grants broad secret permissions
+- App Service app_settings contains plaintext secret
+- Function App app_settings contains plaintext secret
+- SQL Server admin password hardcoded in Terraform
+- VM admin password hardcoded in Terraform
+- Service Principal secret has no expiry date
+- Key Vault key has no expiration date
+- Storage Account shared access key (SAS) enabled
 
 </details>
 
 <details>
 <summary><b>📊 Monitoring & Compliance (5 patterns)</b></summary>
 
-- Azure Defender disabled
-- Azure Policy not enabled
-- Activity Logs not retained
-- Log Analytics Workspace not configured
-- Critical alerts missing
+- Microsoft Defender (Security Center) on Free tier
+- Monitor diagnostic setting has no destination configured
+- Activity Log Alert disabled
+- SQL Server Threat Detection Policy disabled
+- AKS cluster has no OMS agent (Azure Monitor) configured
 
 </details>
 
 ---
 
-## ☁️ Google Cloud Security Coverage (50+ Patterns)
+## ☁️ Google Cloud Security Coverage (22 Patterns — v1)
+
+GCP coverage is an intentional v1: 22 high-signal patterns shipped rather than padding the count with checks that don't fire on real-world resources. Full parity with AWS/Azure (50 patterns) is tracked as follow-up work — contributions welcome.
 
 <details>
-<summary><b>🌐 Network Security (12 patterns)</b></summary>
+<summary><b>🌐 Network Security (5 patterns)</b></summary>
 
-- Firewall rules open to `0.0.0.0/0`
-- SSH access exposed publicly
-- RDP access exposed publicly
-- Default VPC in use
-- Missing VPC segmentation
-- Cloud NAT not configured properly
-- Cloud Armor not enabled
-- Public IPs on critical instances
-- Load Balancer logging disabled
-- VPC Flow Logs disabled
-- Private Google Access disabled
-- Database ports exposed publicly
+- Firewall rule allows SSH (22) from `0.0.0.0/0`
+- Firewall rule allows RDP (3389) from `0.0.0.0/0`
+- Firewall rule allows all ports from `0.0.0.0/0`
+- Compute Instance has a public IP via `access_config`
+- Cloud SQL instance has a public IPv4 address enabled
 
 </details>
 
 <details>
-<summary><b>🗄️ Storage Security (15 patterns)</b></summary>
+<summary><b>🗄️ Storage Security (6 patterns)</b></summary>
 
-- Cloud Storage buckets public
-- Uniform bucket-level access disabled
-- Bucket versioning disabled
-- CMEK encryption not used
-- Storage logging disabled
-- Lifecycle rules missing
-- Public snapshots/images
-- Cloud SQL encryption disabled
-- Cloud SQL backups disabled
-- Cloud SQL public IP enabled
-- Snapshot retention insufficient
-- Multi-region replication disabled
-- Sensitive buckets without retention policies
-- Secret Manager secrets unencrypted
-- Filestore without backups
+- GCS bucket IAM binding grants access to allUsers/allAuthenticatedUsers
+- GCS bucket does not enforce uniform bucket-level access
+- GCS bucket does not have object versioning enabled
+- Cloud SQL instance has automated backups disabled
+- Cloud SQL instance does not require SSL for connections
+- Compute Disk uses Google-managed key (no CMEK)
 
 </details>
 
 <details>
-<summary><b>🔑 Identity & Access Management (10 patterns)</b></summary>
+<summary><b>🔑 Identity & Access Management (4 patterns)</b></summary>
 
-- Primitive roles (Owner/Editor) assigned
-- Service accounts with Owner role
-- Overly permissive IAM bindings
-- Workload Identity not used
-- MFA not enforced
-- Service account keys not rotated
-- Public service account access
-- Excessive project-level permissions
-- Cross-project trust misconfigured
-- Default service accounts in production
+- IAM binding grants primitive role (Owner/Editor) at project scope
+- Service account key (long-lived credential) created via Terraform
+- Project IAM binding grants a role to allUsers/allAuthenticatedUsers
+- Resource uses the default Compute Engine service account
 
 </details>
 
 <details>
-<summary><b>🔐 Secrets Management (8 patterns)</b></summary>
+<summary><b>🔐 Secrets Management (3 patterns)</b></summary>
 
-- Secrets hardcoded in Terraform
-- Secrets stored in environment variables
-- Service account keys committed to repositories
-- Secret Manager not used
-- Plaintext database credentials
-- Kubernetes Secrets not encrypted
-- Long-lived API keys
-- Secret rotation not configured
+- Secret Manager secret has no rotation policy
+- Potential secret hardcoded in plaintext environment variable
+- GKE cluster has static basic auth username/password configured
 
 </details>
 
 <details>
-<summary><b>📊 Monitoring & Compliance (5 patterns)</b></summary>
+<summary><b>📊 Monitoring & Compliance (4 patterns)</b></summary>
 
-- Cloud Audit Logs disabled
-- Security Command Center disabled
-- Cloud Monitoring alerts missing
-- Log retention insufficient
-- Organization policies not enforced
+- Audit config resource has no audit_log_config blocks defined
+- GKE node pool does not disable legacy metadata endpoints
+- GKE cluster has no network policy enabled
+- GKE cluster nodes have public IP addresses (private nodes not enabled)
 
 </details>
 
@@ -651,25 +652,24 @@ flowchart TB
 
 | Cloud Provider | Network | Storage | IAM | Secrets | Monitoring | Total |
 |---------------|---------|---------|------|---------|-----------|-------|
-| AWS | 12 | 15 | 10 | 8 | 5 | 50 |
-| Azure | 12 | 15 | 10 | 8 | 5 | 50 |
-| Google Cloud | 12 | 15 | 10 | 8 | 5 | 50 |
+| AWS | 12 | 15 | 10 | 8 | 5 | **50** |
+| Azure | 12 | 15 | 10 | 8 | 5 | **50** |
+| Google Cloud (v1) | 5 | 6 | 4 | 3 | 4 | **22** |
 
 ### Total Multi-Cloud Coverage
 
-- AWS: 50 Patterns
-- Azure: 50 Patterns
-- Google Cloud: 50 Patterns
+- AWS: 50 Patterns (rules + ML risk scoring)
+- Azure: 50 Patterns (rules)
+- Google Cloud: 22 Patterns (rules, v1 — full parity tracked)
 
-**Grand Total: 150+ Security Misconfiguration Detection Patterns**
+**Grand Total: 122 Security Misconfiguration Detection Patterns**
 
 This coverage enables TerraSecure to perform multi-cloud security analysis across AWS, Azure, and Google Cloud environments while providing:
 
-- Unified risk scoring
+- Per-resource provider routing (a single Terraform config mixing AWS, Azure, and GCP resources is scanned correctly for each)
+- Cloud-tagged findings across text, JSON, and SARIF output
 - AI-powered remediation recommendations
-- Compliance validation (CIS, NIST, ISO 27001)
-- Multi-cloud security posture assessment
-- Infrastructure-as-Code (IaC) security scanning
+- Infrastructure-as-Code (IaC) security scanning at build time
 
 ---
 
@@ -679,7 +679,7 @@ This coverage enables TerraSecure to perform multi-cloud security analysis acros
 |---|---|---|
 | **Text** | Human review / developer feedback | Terminal, CI logs |
 | **JSON** | Automation, SIEM ingestion, custom dashboards | Scripts, APIs |
-| **SARIF 2.1.0** | GitHub Security tab, PR annotations | GitHub Advanced Security |
+| **SARIF 2.1.0** | GitHub Security tab, PR annotations, cloud-tagged | GitHub Advanced Security |
 
 ---
 
@@ -687,15 +687,17 @@ This coverage enables TerraSecure to perform multi-cloud security analysis acros
 
 | Metric | Value | Industry Target | Status |
 |---|---|---|---|
-| Accuracy | **92.45%** | >85% |   Exceeds |
-| Precision | **89.29%** | >80% |   Exceeds |
+| Test-Set Accuracy (AWS ML) | **98.11%** | >85% |   Exceeds* |
+| Precision | **100.00%** | >80% |   Exceeds |
 | Recall | **96.00%** | >90% |   Exceeds |
-| F1 Score | **92.54%** | >85% |   Exceeds |
-| False Positive Rate | **10.71%** | <15% |   Excellent |
-| False Negative Rate | **4.00%** | <5% |   Excellent |
+| F1 Score | **97.96%** | >85% |   Exceeds |
+| False Positive Rate (test set) | **0.00%** | <15% |   Excellent* |
+| False Negative Rate | **4.00%** | <5% |   Near target |
 | Inference Speed | **<100ms/resource** | <200ms |   Fast |
-| Model Size | **177 KB** | <1MB |   Lightweight |
+| Model Size | **195 KB** | <1MB |   Lightweight |
 | Memory Usage | **<512 MB RAM** | — |   Container-friendly |
+
+<sub>\* Measured on a 53-sample held-out test set from a 265-sample training corpus. 5-fold cross-validation on the same corpus shows a mean accuracy of **62.26%** (range 52.8%–73.6%) — see [ML Pipeline](#ml-pipeline) for why we're surfacing both numbers rather than just the headline. Scores apply to **AWS resources only**; Azure and GCP findings are rule-based and carry no ML score.</sub>
 
 **Tested at scale:** 10,000+ Terraform resources, nested module configurations, multi-file workspaces.
 
@@ -707,8 +709,8 @@ This coverage enables TerraSecure to perform multi-cloud security analysis acros
 
 ```
 ╔════════════════════════════════════════════════════════════╗
-║              TerraSecure v2.0.0                            ║
-║     AI-Powered Terraform Security Scanner                  ║
+║              TerraSecure v2.1.0                            ║
+║   Multi-Cloud AI-Powered Terraform Security Scanner        ║
 ╚════════════════════════════════════════════════════════════╝
 
 Scan Summary ──────────────────────────────────────────────
@@ -716,7 +718,9 @@ Scan Summary ──────────────────────�
   Passed            : 7
   Issues Found      : 8  (CRITICAL: 2 · HIGH: 4 · MEDIUM: 2)
 
-[CRITICAL] S3 bucket is publicly accessible
+By Cloud: AWS 5 · AZURE 2 · GCP 1
+
+[CRITICAL] [AWS] S3 bucket is publicly accessible
   Resource : aws_s3_bucket.customer_data
   File     : infrastructure/storage.tf:12
   ML Risk  : 95% | Confidence: 92%
@@ -759,15 +763,17 @@ Scan Summary ──────────────────────�
 ```json
 {
   "scan_metadata": {
-    "version": "2.0.0",
+    "version": "2.1.0",
     "timestamp": "2025-03-22T10:00:00Z",
     "total_resources": 15,
     "passed": 7
   },
   "summary": { "CRITICAL": 2, "HIGH": 4, "MEDIUM": 2 },
+  "cloud_breakdown": { "aws": 5, "azure": 2, "gcp": 1 },
   "issues": [
     {
       "severity": "CRITICAL",
+      "cloud": "aws",
       "resource_type": "aws_s3_bucket",
       "resource_name": "customer_data",
       "file": "infrastructure/storage.tf",
@@ -784,14 +790,17 @@ Scan Summary ──────────────────────�
 }
 ```
 
+Findings from Azure and GCP carry `"ml_prediction": "N/A"` in place of a real `ml_risk_score`/`ml_confidence` — rule-based severity still applies, but no ML score is fabricated for clouds the model wasn't trained on.
+
 ---
 
 ### SARIF 2.1.0 (GitHub Security Tab)
 
 SARIF output enables native GitHub code scanning integration:
-- Findings appear as alerts in the **Security → Code Scanning** tab
+- Findings appear as alerts in the **Security → Code Scanning** tab, tagged by `cloud` property
+- `security-severity` scores (critical=9.0, high=7.0, medium=4.0, low=1.0) drive GitHub's severity coloring
 - Annotations on specific lines in pull requests
-- Severity-based dashboard and triage workflow
+- Severity-based dashboard and triage workflow, filterable by cloud
 - Exportable compliance evidence
 
 ---
@@ -812,12 +821,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: JashwanthMU/TerraSecure@v2.0.0
+
+      - name: Run TerraSecure
+        id: terrasecure
+        uses: JashwanthMU/TerraSecure@v2.1.0
         with:
           path: 'infrastructure'
           format: 'sarif'
           fail-on: 'high'
-          upload-sarif: 'true'
+
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.terrasecure.outputs.sarif-file }}
 ```
 
 ### GitLab CI
@@ -886,26 +903,33 @@ jobs:
 ```
 TerraSecure/
 ├── src/
-│   ├── cli.py                 # Command-line interface
+│   ├── cli.py                       # Command-line interface (--cloud filter, all formats)
 │   ├── scanner/
-│   │   ├── parser.py          # Terraform parser
-│   │   └── analyzer.py        # Main orchestrator
+│   │   ├── parser.py                # Terraform (HCL2) parser
+│   │   ├── provider_detector.py     # Resource-type prefix → cloud provider
+│   │   └── analyzer.py              # Main orchestrator, per-resource routing
 │   ├── rules/
-│   │   └── security_rules.py  # 50+ security patterns
+│   │   ├── aws_security_rules.py    # 50 AWS patterns
+│   │   ├── azure_security_rules.py  # 50 Azure patterns
+│   │   └── gcp_security_rules.py    # 22 GCP patterns (v1)
 │   ├── ml/
-│   │   ├── ml_analyzer.py     # ML inference
-│   │   └── feature_extractor.py # Feature engineering
+│   │   ├── ml_analyzer.py           # ML inference (AWS only)
+│   │   └── feature_extractor.py     # Feature engineering
 │   ├── llm/
-│   │   └── bedrock_analyzer.py # AI enhancement
+│   │   └── bedrock_analyzer.py      # AI enhancement
 │   └── formatters/
-│       └── sarif_formatter.py  # SARIF output
+│       └── sarif_formatter.py       # Cloud-tagged SARIF output
 ├── models/
-│   └── terrasecure_production_v1.0.pkl # Pre-trained model
+│   └── terrasecure_production_v1.0.pkl # Pre-trained AWS model
 ├── scripts/
-│   └── build_production_model.py # Model training
+│   └── build_production_model.py    # Model training
+├── examples/
+│   ├── vulnerable/                  # AWS fixtures
+│   ├── vulnerable-azure/            # Azure fixtures
+│   └── vulnerable-gcp/              # GCP fixtures
 └── tests/
-    ├── unit/           # Unit tests
-    └── integration/    # Integration tests
+    ├── unit/                        # Unit tests (rules, CLI, SARIF, ML)
+    └── integration/                 # Full-pipeline tests
 ```
 
 ---
@@ -915,13 +939,13 @@ TerraSecure/
 | Layer | Technology | Purpose |
 |---|---|---|
 | Language | Python 3.11 | Core scanner and CLI |
-| ML Framework | XGBoost + scikit-learn | Risk classification |
+| ML Framework | XGBoost + scikit-learn | Risk classification (AWS) |
 | AI Layer | AWS Bedrock (Claude 3 Haiku) | Finding enrichment |
 | IaC Parsing | python-hcl2 | Terraform file parsing |
-| Output | SARIF 2.1.0, JSON, Text | Multi-format reporting |
+| Output | SARIF 2.1.0, JSON, Text | Multi-format, cloud-tagged reporting |
 | Containerization | Docker + GHCR | Portable deployment |
 | CI/CD | GitHub Actions | Automation & marketplace |
-| Testing | pytest (27 tests) | Quality assurance |
+| Testing | pytest (103 tests) | Quality assurance |
 
 ---
 
@@ -936,7 +960,7 @@ TerraSecure/
 ### Option 1 — GitHub Marketplace (Zero Setup)
 
 ```yaml
-- uses: JashwanthMU/TerraSecure@v2.0.0
+- uses: JashwanthMU/TerraSecure@v2.1.0
 ```
 
 ### Option 2 — Docker
@@ -1005,8 +1029,10 @@ pytest
 ```
 
 Areas where contributions make the most impact:
-- Additional cloud provider support (Azure, GCP Terraform resources)
-- New breach-informed training samples
+- **Closing the GCP parity gap** — 22/50 patterns implemented; the remaining domains (see [Coverage Summary](#-coverage-summary)) are the highest-value contribution right now
+- Growing the ML training corpus (currently 265 samples) to stabilize the accuracy metric — see the cross-validation caveat in [Benchmarks](#-benchmarks)
+- Provider-specific ML feature extractors for Azure/GCP (today only AWS resources get ML risk scoring)
+- Additional cloud providers beyond AWS/Azure/GCP (e.g. Oracle Cloud, Alibaba Cloud)
 - Performance optimizations for large codebases
 - Integration guides for additional CI/CD platforms
 
