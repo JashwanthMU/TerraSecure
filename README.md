@@ -302,7 +302,7 @@ flowchart LR
 
 **Feature categories:** encryption state, network exposure, IAM permissiveness, logging configuration, naming patterns (data sensitivity signals), cross-service dependency risks.
 
-**A note on the accuracy numbers:** the model scores 98.11% on a 53-sample held-out test set, but 5-fold cross-validation on the full 265-sample training corpus shows a mean of 62.26% (range 52.8%–73.6%). With a dataset this size, a single test-set score can vary significantly depending on which rows land in the split — the cross-validation range is the more honest signal of how the model generalizes. We're treating this as an open item: the training corpus needs to grow before the headline test-set number should be read as a stable production accuracy figure. Azure and GCP findings are rule-based only today and carry no ML score — see [Coverage Summary](#-coverage-summary).
+**A note on the accuracy numbers:** the model scores 98.11% on a 53-sample held-out test set, but 5-fold cross-validation on the full 265-sample training corpus shows a mean of 62.26% (range 52.8%–73.6%). With a dataset this size, a single test-set score can vary significantly depending on which rows land in the split - the cross-validation range is the more honest signal of how the model generalizes. We're treating this as an open item: the training corpus needs to grow before the headline test-set number should be read as a stable production accuracy figure. Azure and GCP findings are rule-based only today and carry no ML score - see [Coverage Summary](#-coverage-summary).
 
 ---
 
@@ -660,7 +660,7 @@ GCP coverage is an intentional v1: 22 high-signal patterns shipped rather than p
 
 - AWS: 50 Patterns (rules + ML risk scoring)
 - Azure: 50 Patterns (rules)
-- Google Cloud: 22 Patterns (rules, v1 — full parity tracked)
+- Google Cloud: 22 Patterns (rules, v1 - full parity tracked)
 
 **Grand Total: 122 Security Misconfiguration Detection Patterns**
 
@@ -697,7 +697,7 @@ This coverage enables TerraSecure to perform multi-cloud security analysis acros
 | Model Size | **195 KB** | <1MB |   Lightweight |
 | Memory Usage | **<512 MB RAM** | — |   Container-friendly |
 
-<sub>\* Measured on a 53-sample held-out test set from a 265-sample training corpus. 5-fold cross-validation on the same corpus shows a mean accuracy of **62.26%** (range 52.8%–73.6%) — see [ML Pipeline](#ml-pipeline) for why we're surfacing both numbers rather than just the headline. Scores apply to **AWS resources only**; Azure and GCP findings are rule-based and carry no ML score.</sub>
+<sub>\* Measured on a 53-sample held-out test set from a 265-sample training corpus. 5-fold cross-validation on the same corpus shows a mean accuracy of **62.26%** (range 52.8%–73.6%) - see [ML Pipeline](#ml-pipeline) for why we're surfacing both numbers rather than just the headline. Scores apply to **AWS resources only**; Azure and GCP findings are rule-based and carry no ML score.</sub>
 
 **Tested at scale:** 10,000+ Terraform resources, nested module configurations, multi-file workspaces.
 
@@ -957,19 +957,19 @@ TerraSecure/
 - pip
 - 512 MB RAM minimum
 
-### Option 1 — GitHub Marketplace (Zero Setup)
+### Option 1 - GitHub Marketplace (Zero Setup)
 
 ```yaml
 - uses: JashwanthMU/TerraSecure@v2.1.0
 ```
 
-### Option 2 — Docker
+### Option 2 - Docker
 
 ```bash
 docker pull ghcr.io/jashwanthmu/terrasecure:latest
 ```
 
-### Option 3 — From Source
+### Option 3 - From Source
 
 ```bash
 git clone https://github.com/JashwanthMU/TerraSecure.git
@@ -1012,7 +1012,7 @@ python scripts/build_production_model.py
 
 ## Contributing
 
-Contributions are welcome — bug reports, new security patterns, documentation improvements, or ML enhancements.
+Contributions are welcome - bug reports, new security patterns, documentation improvements, or ML enhancements.
 
 ```bash
 # Fork and clone
