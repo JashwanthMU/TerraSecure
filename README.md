@@ -6,7 +6,7 @@
 
 ### ML-Powered Infrastructure as Code Security Scanner
 
-**Catch cloud misconfigurations at build time — before they become breaches.**
+**Catch cloud misconfigurations at build time - before they become breaches.**
 
 [![Release](https://img.shields.io/github/v/release/JashwanthMU/TerraSecure?style=flat-square&logo=github&color=blue)](https://github.com/JashwanthMU/TerraSecure/releases)
 [![CI/CD](https://img.shields.io/github/actions/workflow/status/JashwanthMU/TerraSecure/ci-cd.yml?style=flat-square&logo=github-actions&label=CI%2FCD)](https://github.com/JashwanthMU/TerraSecure/actions)
@@ -34,15 +34,15 @@
 
 > **82%** of cloud breaches trace back to misconfigurations in Infrastructure as Code *(Gartner)*
 
-Traditional IaC scanners like Checkov and Trivy are rule-based engines that generate hundreds of alerts — with 12–15% being false positives. Security teams burn hours triaging noise while real vulnerabilities slip through.
+Traditional IaC scanners like Checkov and Trivy are rule-based engines that generate hundreds of alerts - with 12–15% being false positives. Security teams burn hours triaging noise while real vulnerabilities slip through.
 
-**TerraSecure takes a different approach:** a pre-trained XGBoost ML model for AWS resources, trained on real-world breach data (Capital One, Uber, Tesla), a hardened multi-cloud rule engine covering AWS, Azure, and GCP, and AWS Bedrock AI analysis — not just flags, but context, business impact, and remediation code.
+**TerraSecure takes a different approach:** a pre-trained XGBoost ML model for AWS resources, trained on real-world breach data (Capital One, Uber, Tesla), a hardened multi-cloud rule engine covering AWS, Azure, and GCP, and AWS Bedrock AI analysis - not just flags, but context, business impact, and remediation code.
 
 ---
 
 ## What is TerraSecure?
 
-TerraSecure is an **intelligent, shift-left security scanner** for Terraform and HCL Infrastructure as Code across **AWS, Azure, and Google Cloud**. It integrates directly into developer workflows — as a GitHub Action, Docker container, or CLI tool — and surfaces security issues with the context a developer actually needs to fix them.
+TerraSecure is an **intelligent, shift-left security scanner** for Terraform and HCL Infrastructure as Code across **AWS, Azure, and Google Cloud**. It integrates directly into developer workflows - as a GitHub Action, Docker container, or CLI tool and surfaces security issues with the context a developer actually needs to fix them.
 
 ```
 Traditional Scanner:"Security group allows SSH from 0.0.0.0/0"
@@ -51,9 +51,9 @@ TerraSecure:         "95% risk score · CRITICAL · Capital One-style
 ```
 
 **Three layers of intelligence:**
-- **Rule Engine** — 122 hardened security patterns across AWS (50), Azure (50), and GCP (22, v1)
-- **ML Model** — XGBoost classifier with 50 engineered features, trained on AWS breach patterns (AWS resources only — see [Benchmarks](#-benchmarks) for accuracy detail)
-- **AI Analysis** — AWS Bedrock (Claude 3 Haiku) explains impact, attack paths, and fixes
+- **Rule Engine** - 122 hardened security patterns across AWS (50), Azure (50), and GCP (22, v1)
+- **ML Model** - XGBoost classifier with 50 engineered features, trained on AWS breach patterns (AWS resources only — see [Benchmarks](#-benchmarks) for accuracy detail)
+- **AI Analysis** - AWS Bedrock (Claude 3 Haiku) explains impact, attack paths, and fixes
 
 ---
 
@@ -73,8 +73,8 @@ TerraSecure:         "95% risk score · CRITICAL · Capital One-style
 | Offline Mode | ✓ | ✓ | **✓** |
 | GitHub Marketplace | ✓ | ✓ | **✓** |
 
-<sub>\* GCP rule coverage is v1 (22 patterns) — AWS and Azure are at full parity (50 patterns each). See [Coverage Summary](#-coverage-summary).</sub>
-<sub>† Measured on a 53-sample held-out test set. 5-fold cross-validation mean was 62.26% (range 52.8%–73.6%) on the same 265-sample training corpus — see [Benchmarks](#-benchmarks) for the full picture rather than the single headline number.</sub>
+<sub>\* GCP rule coverage is v1 (22 patterns) - AWS and Azure are at full parity (50 patterns each). See [Coverage Summary](#-coverage-summary).</sub>
+<sub>† Measured on a 53-sample held-out test set. 5-fold cross-validation mean was 62.26% (range 52.8%–73.6%) on the same 265-sample training corpus - see [Benchmarks](#-benchmarks) for the full picture rather than the single headline number.</sub>
 
 > **Best practice:** Use TerraSecure **alongside** Checkov/Trivy for complementary coverage. TerraSecure's ML layer catches contextual risk that rule-based tools miss on AWS; established scanners provide broader multi-cloud rule breadth today, especially for GCP.
 
@@ -250,7 +250,7 @@ flowchart TB
     style Integration fill:#fce4ec
 ```
 
-Every parsed resource is routed to its cloud provider's rule engine by Terraform resource-type prefix before any checks run — an `azurerm_storage_account` and an `aws_s3_bucket` in the same file are evaluated independently, by the correct rule set, and tagged with their cloud in every output format.
+Every parsed resource is routed to its cloud provider's rule engine by Terraform resource-type prefix before any checks run - an `azurerm_storage_account` and an `aws_s3_bucket` in the same file are evaluated independently, by the correct rule set, and tagged with their cloud in every output format.
 
 ---
 
@@ -352,7 +352,7 @@ sequenceDiagram
     O-->>R: Results with AI Context
 ```
 
-**Graceful degradation:** When AWS Bedrock is unavailable, TerraSecure falls back to expert-crafted breach-informed templates — no silent failures, full offline support.
+**Graceful degradation:** When AWS Bedrock is unavailable, TerraSecure falls back to expert-crafted breach-informed templates - no silent failures, full offline support.
 
 ---
 
@@ -420,7 +420,7 @@ flowchart TB
 
 ## Features
 
-### AWS Security Coverage — 50 Patterns Across 5 Domains
+### AWS Security Coverage - 50 Patterns Across 5 Domains
 
 <details>
 <summary><b>🌐 Network Security (12 patterns)</b></summary>
@@ -590,9 +590,9 @@ flowchart TB
 
 ---
 
-## ☁️ Google Cloud Security Coverage (22 Patterns — v1)
+## ☁️ Google Cloud Security Coverage (22 Patterns - v1)
 
-GCP coverage is an intentional v1: 22 high-signal patterns shipped rather than padding the count with checks that don't fire on real-world resources. Full parity with AWS/Azure (50 patterns) is tracked as follow-up work — contributions welcome.
+GCP coverage is an intentional v1: 22 high-signal patterns shipped rather than padding the count with checks that don't fire on real-world resources. Full parity with AWS/Azure (50 patterns) is tracked as follow-up work - contributions welcome.
 
 <details>
 <summary><b>🌐 Network Security (5 patterns)</b></summary>
@@ -1029,8 +1029,8 @@ pytest
 ```
 
 Areas where contributions make the most impact:
-- **Closing the GCP parity gap** — 22/50 patterns implemented; the remaining domains (see [Coverage Summary](#-coverage-summary)) are the highest-value contribution right now
-- Growing the ML training corpus (currently 265 samples) to stabilize the accuracy metric — see the cross-validation caveat in [Benchmarks](#-benchmarks)
+- **Closing the GCP parity gap** - 22/50 patterns implemented; the remaining domains (see [Coverage Summary](#-coverage-summary)) are the highest-value contribution right now
+- Growing the ML training corpus (currently 265 samples) to stabilize the accuracy metric - see the cross-validation caveat in [Benchmarks](#-benchmarks)
 - Provider-specific ML feature extractors for Azure/GCP (today only AWS resources get ML risk scoring)
 - Additional cloud providers beyond AWS/Azure/GCP (e.g. Oracle Cloud, Alibaba Cloud)
 - Performance optimizations for large codebases
@@ -1041,9 +1041,9 @@ Areas where contributions make the most impact:
 ## Standards & References
 
 **Security Standards**
-- [OASIS SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/) — Reporting format
-- [CIS AWS Benchmarks](https://www.cisecurity.org/benchmark/amazon_web_services) — Security baselines
-- [NIST SP 800-190](https://csrc.nist.gov/publications/detail/sp/800-190/final) — Container security
+- [OASIS SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/) - Reporting format
+- [CIS AWS Benchmarks](https://www.cisecurity.org/benchmark/amazon_web_services) - Security baselines
+- [NIST SP 800-190](https://csrc.nist.gov/publications/detail/sp/800-190/final) - Container security
 - [AWS Well-Architected Security Pillar](https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/welcome.html) — Architecture guidance
 
 **Breach Data Sources**
@@ -1052,9 +1052,9 @@ Areas where contributions make the most impact:
 - Capital One, Uber, Tesla, MongoDB public post-mortems
 
 **Inspired By**
-- [Checkov](https://www.checkov.io/) — IaC scanning pioneer
-- [Trivy](https://trivy.dev/) — Comprehensive security scanner
-- [tfsec](https://aquasecurity.github.io/tfsec/) — Terraform static analysis
+- [Checkov](https://www.checkov.io/) - IaC scanning pioneer
+- [Trivy](https://trivy.dev/) - Comprehensive security scanner
+- [tfsec](https://aquasecurity.github.io/tfsec/) - Terraform static analysis
 
 ---
 
