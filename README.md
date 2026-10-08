@@ -695,7 +695,7 @@ This coverage enables TerraSecure to perform multi-cloud security analysis acros
 | False Negative Rate | **4.00%** | <5% |   Near target |
 | Inference Speed | **<100ms/resource** | <200ms |   Fast |
 | Model Size | **195 KB** | <1MB |   Lightweight |
-| Memory Usage | **<512 MB RAM** | — |   Container-friendly |
+| Memory Usage | **<512 MB RAM** | - |   Container-friendly |
 
 <sub>\* Measured on a 53-sample held-out test set from a 265-sample training corpus. 5-fold cross-validation on the same corpus shows a mean accuracy of **62.26%** (range 52.8%–73.6%) - see [ML Pipeline](#ml-pipeline) for why we're surfacing both numbers rather than just the headline. Scores apply to **AWS resources only**; Azure and GCP findings are rule-based and carry no ML score.</sub>
 
@@ -1066,6 +1066,6 @@ Areas where contributions make the most impact:
 
 <div align="center">
 
-**TerraSecure** · Shift security left. Scan at build time. Stop breaches before they start.
+**TerraSecure** - Shift security left. Scan at build time. Stop breaches before they start.
 
 </div>
