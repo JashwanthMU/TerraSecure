@@ -46,13 +46,13 @@ TerraSecure is an **intelligent, shift-left security scanner** for Terraform and
 
 ```
 Traditional Scanner:"Security group allows SSH from 0.0.0.0/0"
-TerraSecure:         "95% risk score · CRITICAL · Capital One-style
-                       attack vector · GDPR exposure · 3-step fix"
+TerraSecure:         "95% risk score | CRITICAL | Capital One-style
+                       attack vector | GDPR exposure | 3-step fix"
 ```
 
 **Three layers of intelligence:**
 - **Rule Engine** - 122 hardened security patterns across AWS (50), Azure (50), and GCP (22, v1)
-- **ML Model** - XGBoost classifier with 50 engineered features, trained on AWS breach patterns (AWS resources only — see [Benchmarks](#-benchmarks) for accuracy detail)
+- **ML Model** - XGBoost classifier with 50 engineered features, trained on AWS breach patterns (AWS resources only - see [Benchmarks](#-benchmarks) for accuracy detail)
 - **AI Analysis** - AWS Bedrock (Claude 3 Haiku) explains impact, attack paths, and fixes
 
 ---
